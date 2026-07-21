@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Calcula la probabilidad de que un sorteo de temas de oposición te deje temas preparados, con la fórmula hipergeométrica explicada paso a paso."
+    />
+    <title>Probabilidad de oposiciones</title>
+    <script>
+      // Applies the stored theme before first paint to avoid a flash of the
+      // wrong palette. useTheme takes over from here.
+      (() => {
+        const stored = localStorage.getItem('opoprobability:theme');
+        const theme =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

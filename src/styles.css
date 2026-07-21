@@ -1,0 +1,473 @@
+/*
+ * Theming works off `data-theme` on <html>, set by useTheme. The light palette
+ * is the default so the page is readable even before the script runs.
+ */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --border: #dfe3e8;
+  --text: #16191d;
+  --text-muted: #5b6470;
+  --accent: #2f5bd6;
+  --accent-soft: rgba(47, 91, 214, 0.12);
+  --high: #1f8a4c;
+  --medium: #b8860b;
+  --low: #c0392b;
+  --grid: #e6e9ee;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.05);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f1216;
+  --surface: #171b21;
+  --border: #2a313a;
+  --text: #e8ecf1;
+  --text-muted: #99a3b0;
+  --accent: #7aa2ff;
+  --accent-soft: rgba(122, 162, 255, 0.16);
+  --high: #4ac97e;
+  --medium: #e0b341;
+  --low: #ef7a6d;
+  --grid: #232a33;
+  --shadow: none;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  line-height: 1.55;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0 0 0.5rem;
+}
+
+h1 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+h2 {
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+h3 {
+  font-size: 0.95rem;
+  margin-top: 1.5rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.app {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+/* Header ------------------------------------------------------------------ */
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.site-header__titles p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 52ch;
+}
+
+.site-header__actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.site-header__select,
+.field__select,
+.field__number {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+}
+
+.site-header__theme {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.site-header__theme:hover,
+.targets__button:hover {
+  border-color: var(--accent);
+}
+
+/* Layout ------------------------------------------------------------------ */
+
+.layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+/* The chart and the derivation want the full width of the grid. */
+.layout > .panel:nth-child(n + 4) {
+  grid-column: 1 / -1;
+}
+
+.panel--error {
+  border-color: var(--low);
+}
+
+/* Fields ------------------------------------------------------------------ */
+
+.field + .field {
+  margin-top: 1.1rem;
+}
+
+.field__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.field label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.field__number {
+  width: 5.5rem;
+  text-align: right;
+}
+
+.field__select {
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.field__range {
+  width: 100%;
+  margin: 0.5rem 0 0;
+  accent-color: var(--accent);
+}
+
+.field__hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* Result ------------------------------------------------------------------ */
+
+.result__value {
+  font-size: clamp(3rem, 10vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1;
+  margin: 0.5rem 0 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.result--high .result__value {
+  color: var(--high);
+}
+.result--medium .result__value {
+  color: var(--medium);
+}
+.result--low .result__value {
+  color: var(--low);
+}
+
+.result__facts {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.result__facts li + li {
+  margin-top: 0.3rem;
+}
+
+/* Inverse ----------------------------------------------------------------- */
+
+.targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.targets__button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font: inherit;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.targets__button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.inverse__answer {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.inverse__detail {
+  margin: 0.2rem 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+/* Chart ------------------------------------------------------------------- */
+
+.chart {
+  width: 100%;
+  height: auto;
+  margin-top: 0.5rem;
+  overflow: visible;
+}
+
+.chart__gridline {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+
+.chart__area {
+  fill: var(--accent-soft);
+}
+
+.chart__line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.chart__target {
+  stroke: var(--medium);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.chart__marker {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2.5;
+}
+
+.chart__marker-line {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+}
+
+.chart__tick {
+  fill: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__tick--y {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.chart__tick--x {
+  text-anchor: middle;
+}
+
+.chart__label {
+  fill: var(--medium);
+  font-size: 12px;
+  text-anchor: end;
+}
+
+.chart__caption {
+  margin: 0.5rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.chart__axis-note {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Derivation -------------------------------------------------------------- */
+
+.derivation__summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.derivation__intro {
+  margin-top: 1rem;
+}
+
+.derivation__aside {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.derivation__equation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.derivation__equals {
+  color: var(--text-muted);
+}
+
+.derivation__times {
+  margin: 0 0.35rem;
+  color: var(--text-muted);
+}
+
+/* C(n, k) drawn as the stacked binomial notation. */
+.binomial {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.binomial__paren {
+  font-size: 1.9em;
+  color: var(--text-muted);
+  line-height: 0.9;
+}
+
+.binomial__stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0.15rem;
+  font-size: 0.82em;
+  line-height: 1.15;
+}
+
+.derivation__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.derivation__table th,
+.derivation__table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.4rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.derivation__table th {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.derivation__count,
+.derivation__percent {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.derivation__equation--result strong {
+  color: var(--accent);
+}
+
+.derivation__formula {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem;
+  overflow-x: auto;
+  font-size: 0.9rem;
+}
+
+/* Footer ------------------------------------------------------------------ */
+
+.site-footer {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.88rem;
+}
+
+.site-footer a {
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
