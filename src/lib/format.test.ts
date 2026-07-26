@@ -6,17 +6,17 @@ import { formatInteger, formatPercent, formatPrecisePercent } from './format';
 const normalize = (value: string) => value.replaceAll(/[\s  ]/gu, ' ');
 
 describe('formatPercent', () => {
-  it('uses one decimal', () => {
-    expect(normalize(formatPercent(0.89655, 'en-GB'))).toBe('89.7%');
+  it('uses two decimals', () => {
+    expect(normalize(formatPercent(0.89655, 'en-GB'))).toBe('89.66%');
   });
 
   it('follows the locale separators', () => {
-    expect(normalize(formatPercent(0.89655, 'es-ES'))).toBe('89,7 %');
+    expect(normalize(formatPercent(0.89655, 'es-ES'))).toBe('89,66 %');
   });
 
   it('handles the extremes', () => {
-    expect(normalize(formatPercent(0, 'en-GB'))).toBe('0.0%');
-    expect(normalize(formatPercent(1, 'en-GB'))).toBe('100.0%');
+    expect(normalize(formatPercent(0, 'en-GB'))).toBe('0.00%');
+    expect(normalize(formatPercent(1, 'en-GB'))).toBe('100.00%');
   });
 });
 

@@ -1,47 +1,74 @@
-import { useI18n } from '../i18n/context';
+import { useAnimatedNumber } from '../hooks/useAnimatedNumber';
+import { useI18n, type MessageKey } from '../i18n/context';
 import { formatPercent } from '../lib/format';
-import {
-  marginalGain,
-  successProbability,
-  topicsToDevelop,
-  type Params,
-} from '../lib/hypergeometric';
+import { marginalGain, successProbability, type Params } from '../lib/hypergeometric';
+import { riskLevel, type RiskLevel } from '../lib/risk';
 
-/**
- * Bucketed reading of the probability, so the number comes with a verdict.
- * Also drives the accent colour of the panel.
- */
-function toneFor(probability: number): 'high' | 'medium' | 'low' {
-  if (probability >= 0.9) return 'high';
-  if (probability >= 0.7) return 'medium';
-  return 'low';
-}
+const RISK_LABEL: Record<RiskLevel, MessageKey> = {
+  veryHigh: 'riskVeryHigh',
+  high: 'riskHigh',
+  even: 'riskEven',
+  low: 'riskLow',
+  veryLow: 'riskVeryLow',
+};
 
-export function ResultPanel({ params }: { params: Params }) {
+export function ResultPanel({ params }: { params: Params | null }) {
   const { t, intlLocale } = useI18n();
 
-  const probability = successProbability(params);
-  const gain = marginalGain(params);
-  const develop = topicsToDevelop(params);
-  const unprepared = params.N - params.prepared;
+  const probability = params ? successProbability(params) : null;
+  const shown = useAnimatedNumber(probability);
+
+  const risk = probability === null ? null : riskLevel(probability);
+  const gain = params ? marginalGain(params) : 0;
 
   return (
-    <section className={`panel result result--${toneFor(probability)}`}>
-      <h2>{t('resultTitle')}</h2>
+    <div className="verdict" data-risk={risk ?? 'none'}>
+      <div className="verdict__figure">
+        <span className="verdict__caption" aria-hidden="true">
+          P(X ≥ d)
+        </span>
+        <p
+          className="verdict__value"
+          role="status"
+          aria-live="polite"
+          aria-label={
+            probability === null || risk === null
+              ? t('resultEmpty')
+              : t('resultAria', {
+                  risk: t(RISK_LABEL[risk]),
+                  value: formatPercent(probability, intlLocale),
+                })
+          }
+        >
+          {shown === null ? '—' : formatPercent(shown, intlLocale)}
+        </p>
+      </div>
 
-      <p className="result__value" role="img" aria-label={t('resultAria')}>
-        {formatPercent(probability, intlLocale)}
-      </p>
+      <div className="verdict__reading">
+        <div className="verdict__label">{t('resultLabel')}</div>
 
-      <ul className="result__facts">
-        <li>{t('developSummary', { count: develop, drawn: params.k })}</li>
-        <li>{t('unpreparedSummary', { count: unprepared })}</li>
-        <li>
-          {gain > 0
-            ? t('marginalGain', { gain: formatPercent(gain, intlLocale) })
-            : t('marginalGainNone')}
-        </li>
-      </ul>
-    </section>
+        <div className="meter" role="presentation">
+          <div
+            className="meter__fill"
+            style={{ width: `${String(Math.max(1, (shown ?? 0) * 100))}%` }}
+          />
+        </div>
+
+        <div className="verdict__notes">
+          <span className="verdict__chip">
+            {risk === null ? t('resultEmpty') : t(RISK_LABEL[risk])}
+          </span>
+          <p>{t('resultSub')}</p>
+        </div>
+
+        {params ? (
+          <p className="verdict__gain">
+            {gain > 0
+              ? t('marginalGain', { gain: formatPercent(gain, intlLocale) })
+              : t('marginalGainNone')}
+          </p>
+        ) : null}
+      </div>
+    </div>
   );
 }

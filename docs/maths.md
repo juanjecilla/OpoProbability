@@ -87,11 +87,18 @@ Worked out for `N=60, P=40, k=4, d=2`:
 | 1      | `C(40,1)·C(20,3)` = 40 · 1,140 | 45,600      | 9.351%      |
 | **≥2** | `487,635 − 50,445`             | **437,190** | **89.655%** |
 
-The full distribution, for reference:
+The full distribution, for reference, with the tail the app tabulates next to it:
 
-| `X` | 0      | 1      | 2       | 3       | 4       |
-| --- | ------ | ------ | ------- | ------- | ------- |
-| P   | 0.994% | 9.351% | 30.392% | 40.522% | 18.741% |
+| `i`        | 0      | 1       | 2       | 3       | 4       |
+| ---------- | ------ | ------- | ------- | ------- | ------- |
+| `P(X = i)` | 0.994% | 9.351%  | 30.392% | 40.522% | 18.741% |
+| `P(X ≥ i)` | 100%   | 99.006% | 89.655% | 59.263% | 18.741% |
+| Ways       | 4,845  | 45,600  | 148,200 | 197,600 | 91,390  |
+
+The second row is the one that answers the question for every possible exam bar: reading it at
+`i = d` gives the success probability, which is why the app shows the whole breakdown rather than
+just the terms it summed. It is accumulated as an exact integer suffix sum and divided once, so
+`P(X ≥ d)` in the table is the same number as the headline, not a rounded reconstruction of it.
 
 ## 4. The inverse problem
 

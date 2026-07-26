@@ -1,5 +1,5 @@
-import { useI18n } from '../i18n/context';
-import type { Params } from '../lib/hypergeometric';
+import { useI18n, type MessageKey } from '../i18n/context';
+import { bump, sanitize, type FieldInputs, type FieldIssue, type FieldName } from '../lib/fields';
 import presets from '../data/presets.json';
 
 /**
@@ -13,155 +13,140 @@ export interface Preset {
   discards: number;
 }
 
+interface FieldSpec {
+  name: FieldName;
+  /** The symbol the maths uses, boxed next to the label. */
+  symbol: string;
+  label: MessageKey;
+  hint: MessageKey;
+}
+
+const FIELDS: FieldSpec[] = [
+  { name: 'N', symbol: 'N', label: 'fieldTopics', hint: 'fieldTopicsHint' },
+  { name: 'k', symbol: 'k', label: 'fieldDraw', hint: 'fieldDrawHint' },
+  { name: 'P', symbol: 'P', label: 'fieldPrepared', hint: 'fieldPreparedHint' },
+  { name: 'd', symbol: 'd', label: 'fieldRequired', hint: 'fieldRequiredHint' },
+];
+
 interface ControlsProps {
-  params: Params;
-  onChange: (params: Params) => void;
+  inputs: FieldInputs;
+  errors: Partial<Record<FieldName, FieldIssue>>;
+  onChange: (inputs: FieldInputs) => void;
+  onReset: () => void;
 }
 
-/** A slider paired with a number box, both driving the same value. */
-function NumberField({
-  label,
-  hint,
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  label: string;
-  hint: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (value: number) => void;
-}) {
-  const id = `field-${label.replaceAll(/\s+/gu, '-').toLowerCase()}`;
+export function Controls({ inputs, errors, onChange, onReset }: ControlsProps) {
+  const { t, messages } = useI18n();
 
-  return (
-    <div className="field">
-      <div className="field__header">
-        <label htmlFor={id}>{label}</label>
-        <input
-          id={id}
-          type="number"
-          className="field__number"
-          value={value}
-          min={min}
-          max={max}
-          onChange={(event) => {
-            onChange(event.target.valueAsNumber);
-          }}
-        />
-      </div>
-      <input
-        type="range"
-        className="field__range"
-        aria-label={label}
-        value={Number.isNaN(value) ? min : value}
-        min={min}
-        max={max}
-        step={1}
-        onChange={(event) => {
-          onChange(event.target.valueAsNumber);
-        }}
-      />
-      <p className="field__hint">{hint}</p>
-    </div>
-  );
-}
-
-export function Controls({ params, onChange }: ControlsProps) {
-  const { t } = useI18n();
-
-  const activePreset = (presets as Preset[]).find(
-    (preset) =>
-      preset.N === params.N && preset.k === params.k && preset.discards === params.discards,
-  );
-
-  const applyPreset = (id: string) => {
-    const preset = (presets as Preset[]).find((candidate) => candidate.id === id);
-    if (!preset) return;
-
+  /** Presets describe the exam, so they fill N, k and the minimum needed. */
+  const applyPreset = (preset: Preset) => {
     onChange({
-      N: preset.N,
-      k: preset.k,
-      discards: preset.discards,
-      // Keep the study effort already entered, capped to the new syllabus.
-      prepared: Math.min(params.prepared, preset.N),
+      ...inputs,
+      N: String(preset.N),
+      k: String(preset.k),
+      d: String(preset.k - preset.discards),
     });
   };
 
-  return (
-    <section className="panel">
-      <h2>{t('setupTitle')}</h2>
+  const isActive = (preset: Preset) =>
+    inputs.N === String(preset.N) &&
+    inputs.k === String(preset.k) &&
+    inputs.d === String(preset.k - preset.discards);
 
-      <div className="field">
-        <label htmlFor="preset">{t('presetLabel')}</label>
-        <select
-          id="preset"
-          className="field__select"
-          value={activePreset?.id ?? ''}
-          onChange={(event) => {
-            applyPreset(event.target.value);
-          }}
-        >
-          {!activePreset && <option value="">{t('presetCustom')}</option>}
+  return (
+    <>
+      <div className="presets">
+        <div className="presets__label">{t('presets')}</div>
+        <div className="presets__list">
           {(presets as Preset[]).map((preset) => (
-            <option key={preset.id} value={preset.id}>
-              {t('presetOption', { N: preset.N, k: preset.k, discards: preset.discards })}
-            </option>
+            <button
+              key={preset.id}
+              type="button"
+              className="chip"
+              aria-pressed={isActive(preset)}
+              onClick={() => {
+                applyPreset(preset);
+              }}
+            >
+              {t('presetOption', { N: preset.N, k: preset.k, d: preset.k - preset.discards })}
+            </button>
           ))}
-        </select>
-        <p className="field__hint">{t('presetHint')}</p>
+        </div>
+        <p className="presets__hint">{t('presetHint')}</p>
       </div>
 
-      <NumberField
-        label={t('fieldTopics')}
-        hint={t('fieldTopicsHint')}
-        value={params.N}
-        min={1}
-        max={300}
-        onChange={(N) => {
-          onChange({
-            ...params,
-            N,
-            k: Math.min(params.k, N),
-            prepared: Math.min(params.prepared, N),
-          });
-        }}
-      />
+      <div className="fields">
+        {FIELDS.map((field) => {
+          const id = `field-${field.name}`;
+          const hintId = `${id}-hint`;
+          const issue = errors[field.name];
+          const label = t(field.label);
 
-      <NumberField
-        label={t('fieldDraw')}
-        hint={t('fieldDrawHint')}
-        value={params.k}
-        min={1}
-        max={Math.min(params.N, 12)}
-        onChange={(k) => {
-          onChange({ ...params, k, discards: Math.min(params.discards, k - 1) });
-        }}
-      />
+          return (
+            <div className="field" key={field.name}>
+              <label className="field__label" htmlFor={id}>
+                <span className="field__symbol" aria-hidden="true">
+                  {field.symbol}
+                </span>
+                <span>{label}</span>
+              </label>
 
-      <NumberField
-        label={t('fieldDiscards')}
-        hint={t('fieldDiscardsHint')}
-        value={params.discards}
-        min={0}
-        max={Math.max(0, params.k - 1)}
-        onChange={(discards) => {
-          onChange({ ...params, discards });
-        }}
-      />
+              <div className="field__control">
+                <button
+                  type="button"
+                  className="field__step"
+                  aria-label={t('decrease', { field: label })}
+                  onClick={() => {
+                    onChange(bump(inputs, field.name, -1));
+                  }}
+                >
+                  −
+                </button>
+                {/* A text box rather than type=number: half-typed values have
+                    to survive long enough to be corrected. */}
+                <input
+                  id={id}
+                  className="field__input"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={inputs[field.name]}
+                  aria-invalid={issue !== undefined}
+                  aria-describedby={hintId}
+                  onChange={(event) => {
+                    onChange({ ...inputs, [field.name]: sanitize(event.target.value) });
+                  }}
+                />
+                <button
+                  type="button"
+                  className="field__step"
+                  aria-label={t('increase', { field: label })}
+                  onClick={() => {
+                    onChange(bump(inputs, field.name, 1));
+                  }}
+                >
+                  +
+                </button>
+              </div>
 
-      <NumberField
-        label={t('fieldPrepared')}
-        hint={t('fieldPreparedHint')}
-        value={params.prepared}
-        min={0}
-        max={params.N}
-        onChange={(prepared) => {
-          onChange({ ...params, prepared });
-        }}
-      />
-    </section>
+              <p className="field__hint" id={hintId}>
+                {t(field.hint)}
+              </p>
+
+              {issue ? (
+                <p className="field__error" role="alert">
+                  <span aria-hidden="true">⚠</span>
+                  {messages.issue[issue]}
+                </p>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+
+      <button type="button" className="button button--quiet" onClick={onReset}>
+        {t('reset')}
+      </button>
+    </>
   );
 }

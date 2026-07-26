@@ -20,8 +20,8 @@ function formattersFor(locale: string): Formatters {
   const formatters: Formatters = {
     percent: new Intl.NumberFormat(locale, {
       style: 'percent',
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }),
     precisePercent: new Intl.NumberFormat(locale, {
       style: 'percent',
@@ -35,7 +35,7 @@ function formattersFor(locale: string): Formatters {
   return formatters;
 }
 
-/** Percentage with one decimal: `89.7%` / `89,7 %`. */
+/** Percentage with two decimals: `89.66%` / `89,66 %`. */
 export function formatPercent(value: number, locale: string): string {
   return formattersFor(locale).percent.format(value);
 }

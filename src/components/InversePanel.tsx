@@ -5,41 +5,43 @@ import { minPreparedFor, type Params } from '../lib/hypergeometric';
 const TARGETS = [0.8, 0.9, 0.95, 0.99];
 
 interface InversePanelProps {
-  params: Params;
+  params: Params | null;
   target: number;
   onTargetChange: (target: number) => void;
 }
 
 /**
  * The inverse question: not "how likely am I to pass" but "how many topics do
- * I have to prepare to sleep at night".
+ * I have to prepare to sleep at night". The chosen target is also the dashed
+ * line drawn across the chart above.
  */
 export function InversePanel({ params, target, onTargetChange }: InversePanelProps) {
   const { t, intlLocale } = useI18n();
 
-  const needed = minPreparedFor(params.N, params.k, params.discards, target);
+  const needed = params ? minPreparedFor(params.N, params.k, params.discards, target) : null;
 
   return (
-    <section className="panel">
-      <h2>{t('inverseTitle')}</h2>
-
-      <div className="targets" role="group" aria-label={t('inverseTargetLabel')}>
-        {TARGETS.map((candidate) => (
-          <button
-            key={candidate}
-            type="button"
-            className="targets__button"
-            aria-pressed={candidate === target}
-            onClick={() => {
-              onTargetChange(candidate);
-            }}
-          >
-            {formatPercent(candidate, intlLocale)}
-          </button>
-        ))}
+    <div className="inverse">
+      <div className="inverse__header">
+        <h3>{t('inverseTitle')}</h3>
+        <div className="segmented" role="group" aria-label={t('inverseTargetLabel')}>
+          {TARGETS.map((candidate) => (
+            <button
+              key={candidate}
+              type="button"
+              className="segmented__button"
+              aria-pressed={candidate === target}
+              onClick={() => {
+                onTargetChange(candidate);
+              }}
+            >
+              {formatPercent(candidate, intlLocale)}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {needed === null ? (
+      {params === null ? null : needed === null ? (
         <p className="inverse__answer">{t('inverseImpossible')}</p>
       ) : (
         <>
@@ -56,6 +58,6 @@ export function InversePanel({ params, target, onTargetChange }: InversePanelPro
           </p>
         </>
       )}
-    </section>
+    </div>
   );
 }

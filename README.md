@@ -73,12 +73,15 @@ The full write-up, including the inverse problem and the numerical details, is i
 
 ## Parameters
 
-| Field                    | Symbol | Meaning                                               |
-| ------------------------ | ------ | ----------------------------------------------------- |
-| Topics in the syllabus   | `N`    | How many balls are in the drum                        |
-| Topics drawn             | `k`    | How many balls the board pulls out                    |
-| Topics you discard       | —      | How many of the drawn ones you may reject (`0 … k−1`) |
-| Topics you have prepared | `P`    | The ones you genuinely know                           |
+| Field          | Symbol | Meaning                                                 |
+| -------------- | ------ | ------------------------------------------------------- |
+| Total topics   | `N`    | How many balls are in the drum                          |
+| Topics drawn   | `k`    | How many balls the board pulls out                      |
+| Topics studied | `P`    | The ones you genuinely know                             |
+| Minimum needed | `d`    | How many of the drawn topics you must develop (`1 … k`) |
+
+The form asks for the minimum because that is how official calls word it. The engine still models
+the discards, `discards = k − d`, and that is the shape `Params` and the preset file use.
 
 Everything is free-form, so the calculator works for any exam with this shape, not just the 60/4/2
 case that motivated it.
@@ -100,7 +103,14 @@ Presets only prefill the fields; they claim nothing about any particular exam. A
 { "id": "80-5-2", "N": 80, "k": 5, "discards": 2 }
 ```
 
-The visible label is generated from the numbers, so it needs no translation.
+The chip label is generated from the numbers — `80 · 5 · min 3` — so it needs no translation.
+Presets fill in the exam shape only; the topics you have studied stay as you left them.
+
+## Support links
+
+The footer links to Ko-fi, Buy Me a Coffee, PayPal and GitHub Sponsors, configured in
+[`src/data/donations.json`](src/data/donations.json). A platform whose URL is left empty is not
+rendered at all, so removing one is a one-line change.
 
 ## Development
 
@@ -125,15 +135,18 @@ npm run dev              # http://localhost:5173/OpoProbability/
 ```
 src/
 ├─ lib/hypergeometric.ts   the whole probability engine, framework-free
+├─ lib/fields.ts           what you type ↔ what the engine takes
 ├─ lib/format.ts           locale-aware number formatting
+├─ lib/risk.ts             probability → verdict band
 ├─ i18n/                   translation dictionaries and provider
 ├─ theme/useTheme.ts       light/dark with system-preference fallback
+├─ hooks/                  the counting-up of the headline figure
 ├─ components/             UI, no maths
-└─ data/presets.json       common exam shapes
+└─ data/                   common exam shapes, support links
 ```
 
-The engine is pure TypeScript with no React dependency and is the only part under test — the UI is
-verified by hand.
+Everything under `src/lib` is pure TypeScript with no React dependency, and is the only part under
+test — the UI is verified by hand.
 
 ## Stack
 

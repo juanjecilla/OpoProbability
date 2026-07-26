@@ -1,61 +1,69 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Controls } from './components/Controls';
 import { DerivationDrawer } from './components/DerivationDrawer';
 import { InversePanel } from './components/InversePanel';
+import { OddsTable } from './components/OddsTable';
 import { ProbabilityCurve } from './components/ProbabilityCurve';
 import { ResultPanel } from './components/ResultPanel';
+import { Section } from './components/Section';
 import { SiteHeader } from './components/SiteHeader';
+import { SupportFooter } from './components/SupportFooter';
 import { useI18n } from './i18n/context';
-import { validate, type Params } from './lib/hypergeometric';
+import { DEFAULT_FIELDS, parseFields, type FieldInputs } from './lib/fields';
 import { useTheme } from './theme/useTheme';
 
-const REPOSITORY_URL = 'https://github.com/juanjecilla/OpoProbability';
-
-/** The case that motivated the app: 60 topics, 4 drawn, 2 discarded. */
-const DEFAULT_PARAMS: Params = { N: 60, k: 4, discards: 2, prepared: 40 };
-
 export default function App() {
-  const { t, messages } = useI18n();
+  const { t } = useI18n();
   const { theme, toggleTheme } = useTheme();
 
-  const [params, setParams] = useState<Params>(DEFAULT_PARAMS);
+  const [inputs, setInputs] = useState<FieldInputs>(DEFAULT_FIELDS);
   const [target, setTarget] = useState(0.95);
 
-  const issues = validate(params);
-  const isValid = issues.length === 0;
+  // Memoised because `params` is the identity every panel keys its own
+  // memoisation off: re-parsing on each render would redraw the whole curve.
+  const { params, errors } = useMemo(() => parseFields(inputs), [inputs]);
 
   return (
-    <div className="app">
-      <SiteHeader theme={theme} onToggleTheme={toggleTheme} />
+    <div className="page">
+      <article className="sheet">
+        <SiteHeader theme={theme} onToggleTheme={toggleTheme} />
 
-      <main className="layout">
-        <Controls params={params} onChange={setParams} />
+        <div className="sheet__rule" role="presentation" />
 
-        {isValid ? (
-          <>
+        <main className="sheet__body">
+          <Section index="01" id="section-inputs" title={t('inputsTitle')} lead={t('inputsSub')}>
+            <Controls
+              inputs={inputs}
+              errors={errors}
+              onChange={setInputs}
+              onReset={() => {
+                setInputs(DEFAULT_FIELDS);
+              }}
+            />
+          </Section>
+
+          <Section index="02" id="section-result" title={t('resultSection')}>
             <ResultPanel params={params} />
-            <InversePanel params={params} target={target} onTargetChange={setTarget} />
-            <ProbabilityCurve params={params} target={target} />
-            <DerivationDrawer params={params} />
-          </>
-        ) : (
-          <section className="panel panel--error" role="alert">
-            <h2>{t('errorsTitle')}</h2>
-            <ul>
-              {issues.map((issue) => (
-                <li key={issue}>{messages.issue[issue]}</li>
-              ))}
-            </ul>
-          </section>
-        )}
-      </main>
+          </Section>
 
-      <footer className="site-footer">
-        <a href={REPOSITORY_URL} rel="noreferrer noopener" target="_blank">
-          {t('footerSource')}
-        </a>
-      </footer>
+          <Section index="03" id="section-progress" title={t('progressSection')}>
+            <ProbabilityCurve params={params} target={target} />
+
+            <h3 className="odds__title">{t('tableTitle')}</h3>
+            <p className="odds__sub">{t('tableSub')}</p>
+            <OddsTable params={params} />
+
+            <InversePanel params={params} target={target} onTargetChange={setTarget} />
+          </Section>
+
+          <Section index="04" id="section-working" title={t('workingSection')}>
+            <DerivationDrawer params={params} />
+          </Section>
+        </main>
+
+        <SupportFooter />
+      </article>
     </div>
   );
 }

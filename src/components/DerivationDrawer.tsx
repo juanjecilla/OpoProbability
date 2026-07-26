@@ -1,90 +1,124 @@
 import { useI18n } from '../i18n/context';
-import { formatInteger, formatPrecisePercent } from '../lib/format';
-import { derivationSteps, type CombinationFactor, type Params } from '../lib/hypergeometric';
+import { formatInteger, formatPercent, formatPrecisePercent } from '../lib/format';
+import {
+  derivationSteps,
+  outcomeBreakdown,
+  topicsToDevelop,
+  type Params,
+} from '../lib/hypergeometric';
 
-/** Renders C(n, k) in the usual stacked notation. */
-function Binomial({ factor }: { factor: CombinationFactor }) {
-  return (
-    <span className="binomial" aria-label={`C(${factor.n}, ${factor.k})`}>
-      <span className="binomial__paren">(</span>
-      <span className="binomial__stack">
-        <span>{factor.n}</span>
-        <span>{factor.k}</span>
-      </span>
-      <span className="binomial__paren">)</span>
-    </span>
-  );
-}
-
-/**
- * The second layer of the explanation: the full derivation, folded away behind
- * a `<details>` so the headline number stays uncluttered.
- */
-export function DerivationDrawer({ params }: { params: Params }) {
+/** The counted steps: total draws, then each term, then the answer. */
+function WorkedSteps({ params }: { params: Params }) {
   const { t, intlLocale } = useI18n();
 
-  const derivation = derivationSteps(params);
-  const { total, terms, useComplement, termsSum, result, d } = derivation;
+  const { total, terms, useComplement, result } = derivationSteps(params);
   const unprepared = params.N - params.prepared;
 
   return (
-    <details className="panel derivation">
-      <summary className="derivation__summary">{t('derivationToggle')}</summary>
-
-      <p className="derivation__intro">{t('derivationIntro')}</p>
-      <p className="derivation__aside">{t('derivationWhyNotBinomial')}</p>
-
-      <h3>{t('derivationTotalTitle')}</h3>
-      <p>{t('derivationTotalBody', { k: params.k, N: params.N })}</p>
-      <p className="derivation__equation">
-        <Binomial factor={{ n: params.N, k: params.k, value: total }} />
-        <span className="derivation__equals">=</span>
-        <strong>{formatInteger(total, intlLocale)}</strong>
+    <>
+      <p className="working__intro">
+        {useComplement ? t('workedIntroComplement') : t('workedIntroDirect')}
       </p>
+      <p className="working__aside">{t('workedNotBinomial')}</p>
 
-      <h3>{useComplement ? t('derivationFailureTitle') : t('derivationSuccessTitle')}</h3>
-      <p>
-        {useComplement
-          ? t('derivationFailureBody', { d, i: 'i', prepared: params.prepared, unprepared })
-          : t('derivationSuccessBody', { d, i: 'i', prepared: params.prepared, unprepared })}
-      </p>
+      <div className="steps">
+        <div className="steps__row">
+          <span>
+            {t('workedTotal')} · C({params.N},{params.k})
+          </span>
+          <span className="steps__value">{formatInteger(total, intlLocale)}</span>
+        </div>
 
-      <table className="derivation__table">
+        {terms.map((term) => (
+          <div className="steps__row" key={term.i}>
+            <span>
+              {t('workedTerm', { i: term.i })} · C({params.prepared},{term.i})·C({unprepared},
+              {params.k - term.i})
+            </span>
+            <span className="steps__value">
+              {formatInteger(term.favorable, intlLocale)} (
+              {formatPrecisePercent(term.probability, intlLocale)})
+            </span>
+          </div>
+        ))}
+
+        <div className="steps__row steps__row--result">
+          <span>{t('workedResult')}</span>
+          <span className="steps__value">{formatPrecisePercent(result, intlLocale)}</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Every possible draw, from "none of mine came up" to "all of them did". */
+function OutcomeTable({ params }: { params: Params }) {
+  const { t, intlLocale } = useI18n();
+
+  const required = topicsToDevelop(params);
+  const rows = outcomeBreakdown(params.N, params.prepared, params.k);
+
+  return (
+    <div className="outcomes__scroll">
+      <table className="outcomes">
+        <thead>
+          <tr>
+            <th scope="col">{t('thOutcome')}</th>
+            <th scope="col">{t('thWays')}</th>
+            <th scope="col">{t('thExactly')}</th>
+            <th scope="col">{t('thCumulative')}</th>
+          </tr>
+        </thead>
         <tbody>
-          {terms.map((term) => (
-            <tr key={term.i}>
+          {rows.map((row) => (
+            <tr key={row.i} data-success={row.i >= required}>
               <th scope="row">
-                {term.i === 1
-                  ? t('derivationTermLabelOne')
-                  : t('derivationTermLabel', { i: term.i })}
+                <span className="outcomes__dot" aria-hidden="true" />
+                {row.i}
               </th>
-              <td>
-                <Binomial factor={term.factors[0]} />
-                <span className="derivation__times">·</span>
-                <Binomial factor={term.factors[1]} />
-              </td>
-              <td className="derivation__count">{formatInteger(term.favorable, intlLocale)}</td>
-              <td className="derivation__percent">
-                {formatPrecisePercent(term.probability, intlLocale)}
-              </td>
+              <td>{formatInteger(row.ways, intlLocale)}</td>
+              <td className="outcomes__strong">{formatPercent(row.pmf, intlLocale)}</td>
+              <td>{formatPercent(row.cumulative, intlLocale)}</td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
 
-      <h3>{t('derivationResultTitle')}</h3>
-      <p>{useComplement ? t('derivationComplementBody') : t('derivationDirectBody')}</p>
-      <p className="derivation__equation derivation__equation--result">
-        {useComplement && <span>100 %&nbsp;−&nbsp;</span>}
-        <span>{formatPrecisePercent(termsSum, intlLocale)}</span>
-        <span className="derivation__equals">=</span>
-        <strong>{formatPrecisePercent(result, intlLocale)}</strong>
-      </p>
+/**
+ * The second layer of the explanation: the full derivation with the user's own
+ * numbers, folded away behind a `<details>` so the headline stays uncluttered.
+ */
+export function DerivationDrawer({ params }: { params: Params | null }) {
+  const { t } = useI18n();
 
-      <h3>{t('derivationGeneralFormula')}</h3>
-      <pre className="derivation__formula">
-        <code>{'P(X ≥ d) = Σ  C(P, i) · C(N−P, k−i) / C(N, k)\n           i≥d'}</code>
-      </pre>
+  return (
+    <details className="working">
+      <summary className="working__summary">
+        <span>{t('workedTitle')}</span>
+        <span className="working__marker" aria-hidden="true">
+          ＋
+        </span>
+      </summary>
+
+      {params === null ? (
+        <p className="working__intro">—</p>
+      ) : (
+        <div className="working__body">
+          <WorkedSteps params={params} />
+
+          <h3 className="working__heading">{t('outcomeTitle')}</h3>
+          <OutcomeTable params={params} />
+          <p className="working__note">{t('outcomeNote')}</p>
+
+          <h3 className="working__heading">{t('generalFormula')}</h3>
+          <pre className="working__formula">
+            <code>{'P(X ≥ d) = Σ  C(P, i) · C(N−P, k−i) / C(N, k)\n           i≥d'}</code>
+          </pre>
+        </div>
+      )}
     </details>
   );
 }

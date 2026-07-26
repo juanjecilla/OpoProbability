@@ -4,18 +4,15 @@ import { useI18n } from '../i18n/context';
 import { formatPercent } from '../lib/format';
 import { curve, successProbability, type Params } from '../lib/hypergeometric';
 
-const WIDTH = 640;
-const HEIGHT = 320;
-const PADDING = { top: 24, right: 24, bottom: 40, left: 52 };
-
-const PLOT_WIDTH = WIDTH - PADDING.left - PADDING.right;
-const PLOT_HEIGHT = HEIGHT - PADDING.top - PADDING.bottom;
-
-const Y_TICKS = [0, 0.25, 0.5, 0.75, 1];
-
 interface ProbabilityCurveProps {
-  params: Params;
+  params: Params | null;
+  /** Confidence target from the inverse panel, drawn as the dashed guide. */
   target: number;
+}
+
+/** Roughly 60 points is enough to read the shape, however long the syllabus. */
+function sampleStep(N: number): number {
+  return Math.max(1, Math.round(N / 60));
 }
 
 /**
@@ -23,96 +20,117 @@ interface ProbabilityCurveProps {
  *
  * Hand-rolled SVG rather than a charting library: the whole chart is one
  * polyline plus a marker, and pulling in a dependency for that would cost more
- * bytes than the rest of the app.
+ * bytes than the rest of the app. The viewBox is a flat 0–100 square stretched
+ * to the container, so every coordinate below is already a percentage.
  */
 export function ProbabilityCurve({ params, target }: ProbabilityCurveProps) {
   const { t, intlLocale } = useI18n();
 
   const values = useMemo(
-    () => curve(params.N, params.k, params.discards),
-    [params.N, params.k, params.discards],
+    () => (params ? curve(params.N, params.k, params.discards) : null),
+    [params],
   );
 
-  const x = (prepared: number) => PADDING.left + (prepared / params.N) * PLOT_WIDTH;
-  const y = (probability: number) => PADDING.top + (1 - probability) * PLOT_HEIGHT;
+  const geometry = useMemo(() => {
+    if (!params || !values) return null;
 
-  const line = values.map((value, prepared) => `${x(prepared)},${y(value)}`).join(' ');
-  const area = `${PADDING.left},${y(0)} ${line} ${x(params.N)},${y(0)}`;
+    const { N, prepared } = params;
+    const step = sampleStep(N);
+    const samples: number[] = [];
+    for (let x = 0; x <= N; x += step) samples.push(x);
+    if (samples.at(-1) !== N) samples.push(N);
 
-  const current = successProbability(params);
-  const xTicks = [
-    0,
-    Math.round(params.N / 4),
-    Math.round(params.N / 2),
-    Math.round((params.N * 3) / 4),
-    params.N,
-  ];
+    const points = samples
+      .map((x) => `${((x / N) * 100).toFixed(2)} ${(100 - (values[x] ?? 0) * 100).toFixed(2)}`)
+      .join(' L ');
+
+    const ticks = [...new Set([0, Math.round(N / 2), N, prepared])]
+      .filter((value) => value >= 0 && value <= N)
+      .toSorted((a, b) => a - b);
+
+    return {
+      line: `M ${points}`,
+      area: `M 0 100 L ${points} L 100 100 Z`,
+      markerX: (prepared / N) * 100,
+      markerY: successProbability(params) * 100,
+      ticks,
+    };
+  }, [params, values]);
 
   return (
-    <section className="panel">
-      <h2>{t('chartTitle')}</h2>
+    <>
+      <div className="chart__header">
+        <h3>{t('chartTitle')}</h3>
+        <span className="chart__axis">{t('chartAxis')}</span>
+      </div>
+      <p className="chart__sub">{t('chartSub')}</p>
 
-      <svg
+      <div
         className="chart"
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
-        aria-label={`${t('chartTitle')}. ${t('chartYou')}: ${formatPercent(current, intlLocale)}`}
+        aria-label={params ? t('chartAria', { N: params.N }) : t('resultEmpty')}
       >
-        {Y_TICKS.map((tick) => (
-          <g key={tick}>
-            <line
-              className="chart__gridline"
-              x1={PADDING.left}
-              x2={WIDTH - PADDING.right}
-              y1={y(tick)}
-              y2={y(tick)}
-            />
-            <text className="chart__tick chart__tick--y" x={PADDING.left - 10} y={y(tick)}>
-              {formatPercent(tick, intlLocale)}
-            </text>
-          </g>
-        ))}
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="chart__svg">
+          <line
+            className="chart__target"
+            x1="0"
+            x2="100"
+            y1={100 - target * 100}
+            y2={100 - target * 100}
+            vectorEffect="non-scaling-stroke"
+          />
+          {geometry ? (
+            <>
+              <path className="chart__area" d={geometry.area} />
+              <path className="chart__line" d={geometry.line} vectorEffect="non-scaling-stroke" />
+            </>
+          ) : null}
+        </svg>
 
-        {xTicks.map((tick) => (
-          <text key={tick} className="chart__tick chart__tick--x" x={x(tick)} y={HEIGHT - 14}>
-            {tick}
-          </text>
-        ))}
-
-        <polygon className="chart__area" points={area} />
-        <polyline className="chart__line" points={line} />
-
-        <line
-          className="chart__target"
-          x1={PADDING.left}
-          x2={WIDTH - PADDING.right}
-          y1={y(target)}
-          y2={y(target)}
-        />
-        {/* High targets sit close to the top gridline, so the caption drops
-            below the line to avoid colliding with the 100% tick. */}
-        <text
-          className="chart__label"
-          x={WIDTH - PADDING.right}
-          y={target > 0.85 ? y(target) + 16 : y(target) - 8}
-        >
+        <span className="chart__target-label" style={{ bottom: `${String(target * 100)}%` }}>
           {t('chartTarget')} {formatPercent(target, intlLocale)}
-        </text>
+        </span>
 
-        <line
-          className="chart__marker-line"
-          x1={x(params.prepared)}
-          x2={x(params.prepared)}
-          y1={y(current)}
-          y2={y(0)}
-        />
-        <circle className="chart__marker" cx={x(params.prepared)} cy={y(current)} r={6} />
-      </svg>
+        {geometry ? (
+          <>
+            <span
+              className="chart__guide"
+              style={{
+                left: `${String(geometry.markerX)}%`,
+                height: `${String(geometry.markerY)}%`,
+              }}
+            />
+            <span
+              className="chart__dot"
+              style={{
+                left: `${String(geometry.markerX)}%`,
+                bottom: `${String(geometry.markerY)}%`,
+              }}
+            />
+          </>
+        ) : null}
+      </div>
 
-      <p className="chart__caption">{t('chartCaption')}</p>
-      <p className="chart__axis-note">
-        {t('chartAxisX')} · {t('chartAxisY')}
-      </p>
-    </section>
+      <div className="chart__ticks">
+        {geometry?.ticks.map((tick) => {
+          const left = (tick / (params?.N ?? 1)) * 100;
+          // The end labels are pulled inside the plot so they do not hang off
+          // the edge of the sheet.
+          const transform =
+            left <= 0 ? 'none' : left >= 100 ? 'translateX(-100%)' : 'translateX(-50%)';
+
+          return (
+            <span
+              key={tick}
+              className="chart__tick"
+              data-current={params?.prepared === tick}
+              style={{ left: `${String(left)}%`, transform }}
+            >
+              {tick}
+            </span>
+          );
+        })}
+      </div>
+    </>
   );
 }

@@ -157,6 +157,45 @@ export function successProbability(params: Params): number {
   return ratioToNumber(favorable, combinations(N, k));
 }
 
+/** One row of the outcome breakdown: `X = i`, with its exact count. */
+export interface OutcomeRow {
+  /** Number of prepared topics among the drawn ones. */
+  i: number;
+  /** Favourable cases: `C(P, i) · C(N-P, k-i)`. */
+  ways: bigint;
+  /** `P(X = i)`. */
+  pmf: number;
+  /** `P(X >= i)`. */
+  cumulative: number;
+}
+
+/**
+ * The whole distribution laid out row by row, for `i = 0..k`.
+ *
+ * The tail `P(X >= i)` is accumulated as a BigInt suffix sum and divided once,
+ * so `rows[d].cumulative` is bit-for-bit the number `successProbability`
+ * returns rather than a sum of rounded terms.
+ */
+export function outcomeBreakdown(N: number, prepared: number, k: number): OutcomeRow[] {
+  const total = combinations(N, k);
+  const ways = Array.from({ length: k + 1 }, (_, i) => favorableFor(N, prepared, k, i));
+
+  const rows: OutcomeRow[] = [];
+  let tail = 0n;
+  for (let i = k; i >= 0; i--) {
+    const favorable = ways[i] ?? 0n;
+    tail += favorable;
+    rows[i] = {
+      i,
+      ways: favorable,
+      pmf: ratioToNumber(favorable, total),
+      cumulative: ratioToNumber(tail, total),
+    };
+  }
+
+  return rows;
+}
+
 /**
  * Inverse problem: minimum number of topics to prepare to reach `target`.
  *

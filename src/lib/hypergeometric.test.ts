@@ -7,6 +7,7 @@ import {
   distribution,
   marginalGain,
   minPreparedFor,
+  outcomeBreakdown,
   successProbability,
   topicsToDevelop,
   validate,
@@ -220,6 +221,47 @@ describe('validate', () => {
       'discardsNegative',
       'preparedNegative',
     ]);
+  });
+});
+
+describe('outcomeBreakdown', () => {
+  const rows = outcomeBreakdown(60, 40, 4);
+
+  it('has one row per possible number of prepared topics drawn', () => {
+    expect(rows.map((row) => row.i)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('counts the same cases as the worked example', () => {
+    // C(20,4) and C(40,1)·C(20,3), the two failing cases of the 60/4/2 draw.
+    expect(rows[0]?.ways).toBe(4845n);
+    expect(rows[1]?.ways).toBe(45_600n);
+  });
+
+  it('is a distribution: the terms add up to one', () => {
+    const total = rows.reduce((sum, row) => sum + row.pmf, 0);
+    expect(total).toBeCloseTo(1, 12);
+    expect(rows[0]?.cumulative).toBeCloseTo(1, 12);
+  });
+
+  it('has a tail that never grows as i grows', () => {
+    for (let i = 1; i < rows.length; i++) {
+      expect(rows[i]?.cumulative).toBeLessThanOrEqual(rows[i - 1]?.cumulative ?? 1);
+    }
+  });
+
+  it('agrees with successProbability at the required number of topics', () => {
+    // d = k - discards = 2, so P(X >= 2) is exactly the success probability.
+    expect(rows[2]?.cumulative).toBe(successProbability(withPrepared(40)));
+  });
+
+  it('matches the plain distribution term by term', () => {
+    expect(rows.map((row) => row.pmf)).toEqual(distribution(60, 40, 4));
+  });
+
+  it('stays exact where doubles would not', () => {
+    const big = outcomeBreakdown(1000, 400, 10);
+    expect(big[10]?.ways).toBe(combinations(400, 10));
+    expect(big[0]?.cumulative).toBeCloseTo(1, 12);
   });
 });
 
