@@ -4,8 +4,8 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
-  // La app se sirve desde https://juanjecilla.github.io/OpoProbability/
-  base: '/OpoProbability/',
+  // La app se sirve desde https://opoprobabilidad.com
+  base: '/',
   test: {
     coverage: {
       provider: 'v8',
