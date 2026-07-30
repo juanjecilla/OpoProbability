@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   bump,
   DEFAULT_FIELDS,
+  maximum,
   parseFields,
   sanitize,
   toRequired,
@@ -58,6 +59,26 @@ describe('parseFields', () => {
   it('accepts a draw with no discards at all', () => {
     const { params } = parseFields(fields({ k: '3', d: '3' }));
     expect(params).toEqual({ N: 60, k: 3, discards: 0, prepared: 40 });
+  });
+});
+
+describe('maximum', () => {
+  it('has no ceiling for N', () => {
+    expect(maximum(fields(), 'N')).toBeNull();
+  });
+
+  it('bounds k and P by N', () => {
+    expect(maximum(fields(), 'k')).toBe(60);
+    expect(maximum(fields(), 'P')).toBe(60);
+  });
+
+  it('bounds d by k', () => {
+    expect(maximum(fields(), 'd')).toBe(4);
+  });
+
+  it('is null when the bounding field is not a number yet', () => {
+    expect(maximum(fields({ N: '' }), 'k')).toBeNull();
+    expect(maximum(fields({ k: '' }), 'd')).toBeNull();
   });
 });
 
