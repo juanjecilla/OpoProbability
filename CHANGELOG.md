@@ -1,3 +1,13 @@
+# [1.1.0](https://github.com/juanjecilla/OpoProbability/compare/v1.0.1...v1.1.0) (2026-07-30)
+
+### Bug Fixes
+
+- **ci:** use PAT for semantic-release push to bypass ruleset ([d0a2359](https://github.com/juanjecilla/OpoProbability/commit/d0a235902fe01d33898d04470d986cb5b30f0986))
+
+### Features
+
+- reach WCAG AAA compliance, add custom target %, guard invalid inputs ([7734f42](https://github.com/juanjecilla/OpoProbability/commit/7734f42899c382a8d859408fbe0a75a29646dd93))
+
 ## [1.0.1](https://github.com/juanjecilla/OpoProbability/compare/v1.0.0...v1.0.1) (2026-07-30)
 
 ### Bug Fixes
