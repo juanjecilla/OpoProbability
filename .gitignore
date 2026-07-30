@@ -25,3 +25,8 @@ dist-ssr
 
 # Test coverage
 coverage
+
+# Playwright / Lighthouse a11y audits
+playwright-report
+test-results
+reports

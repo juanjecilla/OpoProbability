@@ -34,7 +34,25 @@ export interface ParsedFields {
 export const DEFAULT_FIELDS: FieldInputs = { N: '60', k: '4', P: '40', d: '2' };
 
 /** Lowest value the ± buttons will go to. `P` is the only one that may be 0. */
-const MINIMUM: Record<FieldName, number> = { N: 1, k: 1, P: 0, d: 1 };
+export const MINIMUM: Record<FieldName, number> = { N: 1, k: 1, P: 0, d: 1 };
+
+/**
+ * Highest value the ± buttons will go to, when the field has a ceiling.
+ * `null` means "no ceiling" (`N`) or "the bounding field isn't a number yet"
+ * (in which case the button is left enabled and the text-box error, if any,
+ * is the only feedback).
+ */
+export function maximum(inputs: FieldInputs, field: FieldName): number | null {
+  switch (field) {
+    case 'N':
+      return null;
+    case 'k':
+    case 'P':
+      return toInteger(inputs.N);
+    case 'd':
+      return toInteger(inputs.k);
+  }
+}
 
 /** Which field an engine validation issue belongs to. */
 const ISSUE_FIELD: Record<ValidationIssue, FieldName> = {
@@ -52,7 +70,7 @@ export function sanitize(value: string): string {
   return value.replaceAll(/[^\d-]/gu, '');
 }
 
-function toInteger(value: string): number | null {
+export function toInteger(value: string): number | null {
   const trimmed = value.trim();
   // The pattern has already ruled out anything Number() would mangle.
   return /^-?\d+$/u.test(trimmed) ? Number(trimmed) : null;

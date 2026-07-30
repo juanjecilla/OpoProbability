@@ -15,6 +15,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -b --noEmit",
+    "test:a11y": "npm run build && playwright test",
+    "test:a11y:lighthouse": "npm run build && node scripts/lighthouse-a11y.mjs",
     "prepare": "husky"
   },
   "dependencies": {
@@ -22,6 +24,8 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.62.0",
     "@semantic-release/changelog": "^7.0.0",
     "@semantic-release/git": "^11.0.1",
     "@types/node": "^26.1.1",
@@ -29,7 +33,9 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.10",
+    "chrome-launcher": "^1.2.1",
     "husky": "^9.1.7",
+    "lighthouse": "^13.4.1",
     "lint-staged": "^17.1.0",
     "oxlint": "^1.71.0",
     "prettier": "^3.9.6",

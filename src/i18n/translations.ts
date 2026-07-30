@@ -16,6 +16,9 @@ export const productName = { prefix: 'Opo', suffix: 'Probabilidad' } as const;
  * is derived from it so a missing key in English is a compile error.
  */
 const es = {
+  htmlTitle: 'OpoProbabilidad · calculadora hipergeométrica de examen',
+  metaDescription:
+    'Introduce la forma de tu examen y cuánto has estudiado: la probabilidad exacta de que el sorteo te deje temas que puedes desarrollar, sin reemplazo y con el desarrollo hipergeométrico paso a paso.',
   appTitle: 'OpoProbabilidad, calculadora hipergeométrica de examen',
   tagline: 'Calculadora hipergeométrica de examen',
   subtitle:
@@ -72,6 +75,9 @@ const es = {
 
   inverseTitle: '¿Cuántos temas necesito?',
   inverseTargetLabel: 'Objetivo de confianza',
+  inverseCustomOption: 'Personalizado',
+  inverseCustomLabel: 'Objetivo personalizado, en tanto por ciento',
+  inverseCustomInvalid: 'Introduce un número entero entre 1 y 99.',
   inverseAnswer: 'Necesitas {needed} de {total} temas.',
   inverseSlack: 'Te puedes permitir dejar {count} sin tocar.',
   inverseSlackNone: 'No te sobra ninguno: hace falta el temario entero.',
@@ -121,6 +127,9 @@ const es = {
 export type Translation = typeof es;
 
 const en: Translation = {
+  htmlTitle: 'OpoProbabilidad · hypergeometric exam calculator',
+  metaDescription:
+    "Enter your exam's shape and how much you've studied: the exact probability that the draw leaves you topics you can develop, without replacement and with the step-by-step hypergeometric working.",
   appTitle: 'OpoProbabilidad, hypergeometric exam calculator',
   tagline: 'Hypergeometric exam calculator',
   subtitle:
@@ -175,6 +184,9 @@ const en: Translation = {
 
   inverseTitle: 'How many topics do I need?',
   inverseTargetLabel: 'Confidence target',
+  inverseCustomOption: 'Custom',
+  inverseCustomLabel: 'Custom target, as a percentage',
+  inverseCustomInvalid: 'Enter a whole number between 1 and 99.',
   inverseAnswer: 'You need {needed} of {total} topics.',
   inverseSlack: 'You can afford to skip {count} of them.',
   inverseSlackNone: 'No slack at all: the whole syllabus is required.',

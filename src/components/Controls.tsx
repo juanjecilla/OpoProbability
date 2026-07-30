@@ -1,5 +1,14 @@
 import { useI18n, type MessageKey } from '../i18n/context';
-import { bump, sanitize, type FieldInputs, type FieldIssue, type FieldName } from '../lib/fields';
+import {
+  bump,
+  maximum,
+  MINIMUM,
+  sanitize,
+  toInteger,
+  type FieldInputs,
+  type FieldIssue,
+  type FieldName,
+} from '../lib/fields';
 import presets from '../data/presets.json';
 
 /**
@@ -81,6 +90,10 @@ export function Controls({ inputs, errors, onChange, onReset }: ControlsProps) {
           const hintId = `${id}-hint`;
           const issue = errors[field.name];
           const label = t(field.label);
+          const current = toInteger(inputs[field.name]);
+          const max = maximum(inputs, field.name);
+          const atMin = current !== null && current <= MINIMUM[field.name];
+          const atMax = current !== null && max !== null && current >= max;
 
           return (
             <div className="field" key={field.name}>
@@ -96,6 +109,7 @@ export function Controls({ inputs, errors, onChange, onReset }: ControlsProps) {
                   type="button"
                   className="field__step"
                   aria-label={t('decrease', { field: label })}
+                  disabled={atMin}
                   onClick={() => {
                     onChange(bump(inputs, field.name, -1));
                   }}
@@ -121,6 +135,7 @@ export function Controls({ inputs, errors, onChange, onReset }: ControlsProps) {
                   type="button"
                   className="field__step"
                   aria-label={t('increase', { field: label })}
+                  disabled={atMax}
                   onClick={() => {
                     onChange(bump(inputs, field.name, 1));
                   }}

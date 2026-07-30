@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { createI18nValue, I18nContext } from './context';
-import { detectLocale, locales, type Locale } from './translations';
+import { detectLocale, locales, translations, type Locale } from './translations';
 
 const STORAGE_KEY = 'opoprobability:locale';
 
@@ -22,6 +22,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // prompts) in sync with the language actually rendered.
   useEffect(() => {
     document.documentElement.lang = locale;
+    document.title = translations[locale].htmlTitle;
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute('content', translations[locale].metaDescription);
   }, [locale]);
 
   const value = useMemo(() => createI18nValue(locale, setLocale), [locale, setLocale]);
