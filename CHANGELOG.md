@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/juanjecilla/OpoProbability/compare/v1.0.0...v1.0.1) (2026-07-30)
+
+### Bug Fixes
+
+- serve app from root base path for custom domain ([e215a4a](https://github.com/juanjecilla/OpoProbability/commit/e215a4ad40c15275b176eb666d0593b91902cd09))
+
 # 1.0.0 (2026-07-26)
 
 ### Features
