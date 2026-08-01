@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/juanjecilla/OpoProbability/compare/v1.1.0...v1.1.1) (2026-08-01)
+
+### Performance Improvements
+
+- prerender masthead + inline CSS to fix Speed Index, code-split below-fold sections ([6a915fc](https://github.com/juanjecilla/OpoProbability/commit/6a915fc5dbdda371e2aeb9045ef6ce53ca3fe536)), closes [#root](https://github.com/juanjecilla/OpoProbability/issues/root)
+
 # [1.1.0](https://github.com/juanjecilla/OpoProbability/compare/v1.0.1...v1.1.0) (2026-07-30)
 
 ### Bug Fixes
