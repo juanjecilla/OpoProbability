@@ -2,8 +2,10 @@ import react from '@vitejs/plugin-react';
 // Imported from `vitest/config` rather than `vite` so the `test` block is typed.
 import { defineConfig } from 'vitest/config';
 
+import { prerenderShell } from './vite-plugins/prerender-shell.js';
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), prerenderShell()],
   // The app is served from https://opoprobabilidad.com
   base: '/',
   test: {

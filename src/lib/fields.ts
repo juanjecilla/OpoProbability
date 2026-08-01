@@ -10,7 +10,7 @@
  * speaks in discards, so the two are converted here: `discards = k - d`.
  */
 
-import { validate, type Params, type ValidationIssue } from './hypergeometric';
+import { validate, type Params, type ValidationIssue } from './hypergeometric.js';
 
 export interface FieldInputs {
   N: string;

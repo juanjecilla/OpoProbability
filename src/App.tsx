@@ -1,10 +1,6 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 
 import { Controls } from './components/Controls';
-import { DerivationDrawer } from './components/DerivationDrawer';
-import { InversePanel } from './components/InversePanel';
-import { OddsTable } from './components/OddsTable';
-import { ProbabilityCurve } from './components/ProbabilityCurve';
 import { ResultPanel } from './components/ResultPanel';
 import { Section } from './components/Section';
 import { SiteHeader } from './components/SiteHeader';
@@ -12,6 +8,22 @@ import { SupportFooter } from './components/SupportFooter';
 import { useI18n } from './i18n/context';
 import { DEFAULT_FIELDS, parseFields, type FieldInputs } from './lib/fields';
 import { useTheme } from './theme/useTheme';
+
+// Below-the-fold: not needed for first paint, so split out of the main
+// chunk. `Section`'s heading/frame stays eager (cheap, keeps the page's
+// structure stable); only the content below it is deferred.
+const ProbabilityCurve = lazy(() =>
+  import('./components/ProbabilityCurve').then((m) => ({ default: m.ProbabilityCurve })),
+);
+const OddsTable = lazy(() =>
+  import('./components/OddsTable').then((m) => ({ default: m.OddsTable })),
+);
+const InversePanel = lazy(() =>
+  import('./components/InversePanel').then((m) => ({ default: m.InversePanel })),
+);
+const DerivationDrawer = lazy(() =>
+  import('./components/DerivationDrawer').then((m) => ({ default: m.DerivationDrawer })),
+);
 
 export default function App() {
   const { t } = useI18n();
@@ -48,17 +60,21 @@ export default function App() {
           </Section>
 
           <Section index="03" id="section-progress" title={t('progressSection')}>
-            <ProbabilityCurve params={params} target={target} />
+            <Suspense fallback={null}>
+              <ProbabilityCurve params={params} target={target} />
 
-            <h3 className="odds__title">{t('tableTitle')}</h3>
-            <p className="odds__sub">{t('tableSub')}</p>
-            <OddsTable params={params} />
+              <h3 className="odds__title">{t('tableTitle')}</h3>
+              <p className="odds__sub">{t('tableSub')}</p>
+              <OddsTable params={params} />
 
-            <InversePanel params={params} target={target} onTargetChange={setTarget} />
+              <InversePanel params={params} target={target} onTargetChange={setTarget} />
+            </Suspense>
           </Section>
 
           <Section index="04" id="section-working" title={t('workingSection')}>
-            <DerivationDrawer params={params} />
+            <Suspense fallback={null}>
+              <DerivationDrawer params={params} />
+            </Suspense>
           </Section>
         </main>
 
