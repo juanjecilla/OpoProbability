@@ -29,7 +29,7 @@ function renderMastheadShell(): string {
     )
     .join('');
 
-  return `<header class="masthead">
+  return `<div class="page"><article class="sheet"><header class="masthead">
   <div class="masthead__top">
     <div class="masthead__brand">
       <span class="masthead__logo" aria-hidden="true">
@@ -58,7 +58,7 @@ function renderMastheadShell(): string {
     </div>
   </div>
   <p class="masthead__subtitle">${escapeHtml(t.subtitle)}</p>
-</header>`;
+</header></article></div>`;
 }
 
 /**
