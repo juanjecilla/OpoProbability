@@ -1,3 +1,9 @@
+# [1.3.0](https://github.com/juanjecilla/OpoProbability/compare/v1.2.1...v1.3.0) (2026-10-12)
+
+### Features
+
+- add topic map, distinct simulator entry points and button states ([#23](https://github.com/juanjecilla/OpoProbability/issues/23)) ([9f60945](https://github.com/juanjecilla/OpoProbability/commit/9f60945a6d4134a8f672791097df980fb195cd90))
+
 ## [1.2.1](https://github.com/juanjecilla/OpoProbability/compare/v1.2.0...v1.2.1) (2026-10-12)
 
 ### Bug Fixes
