@@ -82,3 +82,45 @@ test('expanded derivation drawer has no WCAG AAA violations', async ({ page }) =
   const results = await scan(page);
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
+
+for (const locale of ['es', 'en'] as const) {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`simulator after a draw has no WCAG AAA violations (${locale}/${theme})`, async ({
+      page,
+    }) => {
+      await setPreferences(page, locale, theme);
+      // "off" keeps the scan deterministic: no mid-animation colours.
+      await page.addInitScript(() => {
+        localStorage.setItem(
+          'opoprobability:animations',
+          JSON.stringify({ level: 'off', confetti: false, shake: false }),
+        );
+      });
+      await page.goto('/simulacro/?N=60&k=4&P=40&d=2');
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+      await page.getByRole('button', { name: /^(Sortear|Draw)$/u }).click();
+      await page.getByRole('button', { name: /^(Sortear 10 rondas|Draw 10 rounds)$/u }).click();
+
+      const results = await scan(page);
+      expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+    });
+  }
+}
+
+test('simulator confirm dialog has no WCAG AAA violations', async ({ page }) => {
+  await setPreferences(page, 'es', 'light');
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'opoprobability:animations',
+      JSON.stringify({ level: 'off', confetti: false, shake: false }),
+    );
+  });
+  await page.goto('/simulacro/?N=60&k=4&P=40&d=2');
+  await page.getByRole('button', { name: 'Sortear', exact: true }).click();
+  await page.getByRole('button', { name: 'Borrar todo el historial' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+
+  const results = await scan(page);
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
