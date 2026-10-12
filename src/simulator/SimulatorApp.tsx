@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Controls } from '../components/Controls';
 import { Section } from '../components/Section';
 import { SiteHeader } from '../components/SiteHeader';
@@ -26,11 +27,10 @@ import {
   type Round,
   type Session,
 } from '../lib/sessions';
-import { studiedWithin, withMapP } from '../lib/topicMap';
+import { seed, studiedWithin, withMapP } from '../lib/topicMap';
 import { fieldsFromSearch, runFromSearch, searchFromFields } from '../lib/urlParams';
 import { useTheme } from '../theme/useTheme';
 import { AnimationSettings } from './components/AnimationSettings';
-import { ConfirmDialog } from './components/ConfirmDialog';
 import { Drum } from './components/Drum';
 import { RoundsList } from './components/RoundsList';
 import { SessionsArchive } from './components/SessionsArchive';
@@ -311,6 +311,8 @@ export default function SimulatorApp() {
                 onChange={changeInputs}
                 onReset={() => {
                   changeInputs(DEFAULT_FIELDS);
+                  // The example's P comes from the map, so the map returns to 1..P too.
+                  if (source === 'map') setMap(seed(Number(DEFAULT_FIELDS.P)));
                 }}
               />
             </details>

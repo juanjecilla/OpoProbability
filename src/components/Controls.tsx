@@ -1,4 +1,7 @@
+import { useState } from 'react';
+
 import { useI18n, type MessageKey } from '../i18n/context';
+import { ConfirmDialog } from './ConfirmDialog';
 import {
   bump,
   maximum,
@@ -48,6 +51,7 @@ interface ControlsProps {
 
 export function Controls({ inputs, errors, onChange, onReset, lockedP = false }: ControlsProps) {
   const { t, messages } = useI18n();
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   /** Presets describe the exam, so they fill N, k and the minimum needed. */
   const applyPreset = (preset: Preset) => {
@@ -163,9 +167,33 @@ export function Controls({ inputs, errors, onChange, onReset, lockedP = false }:
         })}
       </div>
 
-      <button type="button" className="button button--quiet" onClick={onReset}>
+      {/* With a Topic map, the example also replaces the marked topics: ask first. */}
+      <button
+        type="button"
+        className="button button--quiet"
+        onClick={
+          lockedP
+            ? () => {
+                setConfirmingReset(true);
+              }
+            : onReset
+        }
+      >
         {t('reset')}
       </button>
+      <ConfirmDialog
+        open={confirmingReset}
+        title={t('resetConfirmTitle')}
+        body={t('resetConfirmBody')}
+        actionLabel={t('resetConfirmAction')}
+        onConfirm={() => {
+          setConfirmingReset(false);
+          onReset();
+        }}
+        onCancel={() => {
+          setConfirmingReset(false);
+        }}
+      />
     </>
   );
 }

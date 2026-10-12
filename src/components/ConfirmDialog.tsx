@@ -1,11 +1,13 @@
 import { useEffect, useId, useRef } from 'react';
 
-import { useI18n } from '../../i18n/context';
+import { useI18n } from '../i18n/context';
 
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
   body: string;
+  /** Label of the confirming button; defaults to "Delete". */
+  actionLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -14,7 +16,14 @@ interface ConfirmDialogProps {
  * Modal confirmation on the native `<dialog>`: `showModal` already traps
  * focus, makes the rest of the page inert and closes on Escape.
  */
-export function ConfirmDialog({ open, title, body, onConfirm, onCancel }: ConfirmDialogProps) {
+export function ConfirmDialog({
+  open,
+  title,
+  body,
+  actionLabel,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
   const { t } = useI18n();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -37,7 +46,7 @@ export function ConfirmDialog({ open, title, body, onConfirm, onCancel }: Confir
           {t('simConfirmCancel')}
         </button>
         <button type="button" className="button button--danger" onClick={onConfirm}>
-          {t('simConfirmAction')}
+          {actionLabel ?? t('simConfirmAction')}
         </button>
       </div>
     </dialog>
