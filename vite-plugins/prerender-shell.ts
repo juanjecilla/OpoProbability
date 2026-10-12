@@ -98,8 +98,9 @@ export function prerenderShell(): Plugin {
 
         let html = htmlFile.source;
 
-        // Both pages share one stylesheet, so it is inlined into each and
-        // dropped from the bundle only once every page has taken its copy.
+        // Both pages share one stylesheet, so it is inlined into each. The file
+        // itself stays in the bundle: lazy chunks list it as a preload dependency
+        // and a missing file makes the dynamic import throw.
         const linked = /<link[^>]*rel="stylesheet"[^>]*href="\/?([^"]+\.css)"[^>]*>/u.exec(html);
         if (linked?.[1]) {
           const cssFile = bundle[linked[1]];
@@ -116,10 +117,6 @@ export function prerenderShell(): Plugin {
         html = html.replace(rootPattern, () => `<div id="root">${renderMastheadShell(page)}</div>`);
 
         htmlFile.source = html;
-      }
-
-      for (const name of Object.keys(bundle)) {
-        if (name.endsWith('.css')) delete bundle[name];
       }
     },
   };
