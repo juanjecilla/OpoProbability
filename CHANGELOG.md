@@ -1,3 +1,9 @@
+# [1.2.0](https://github.com/juanjecilla/OpoProbability/compare/v1.1.2...v1.2.0) (2026-10-12)
+
+### Features
+
+- add draw simulator page with session history ([#21](https://github.com/juanjecilla/OpoProbability/issues/21)) ([7d54f6c](https://github.com/juanjecilla/OpoProbability/commit/7d54f6c88e3adb923ab3a5dc1d7e85b6b0325a97))
+
 ## [1.1.2](https://github.com/juanjecilla/OpoProbability/compare/v1.1.1...v1.1.2) (2026-08-01)
 
 ### Bug Fixes
