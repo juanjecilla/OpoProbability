@@ -1,3 +1,9 @@
+## [1.2.1](https://github.com/juanjecilla/OpoProbability/compare/v1.2.0...v1.2.1) (2026-10-12)
+
+### Bug Fixes
+
+- keep shared stylesheet in the bundle so lazy chunks can preload it ([#22](https://github.com/juanjecilla/OpoProbability/issues/22)) ([ada94a0](https://github.com/juanjecilla/OpoProbability/commit/ada94a06edd0fd07e0325528684ab77a9eb962c1))
+
 # [1.2.0](https://github.com/juanjecilla/OpoProbability/compare/v1.1.2...v1.2.0) (2026-10-12)
 
 ### Features
