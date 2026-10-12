@@ -1,3 +1,9 @@
+## [1.3.1](https://github.com/juanjecilla/OpoProbability/compare/v1.3.0...v1.3.1) (2026-10-12)
+
+### Bug Fixes
+
+- make "Volver al ejemplo" restore the topic map too ([#24](https://github.com/juanjecilla/OpoProbability/issues/24)) ([36aa635](https://github.com/juanjecilla/OpoProbability/commit/36aa63521b117f61a2edce68d5767ed8d4a174bc))
+
 # [1.3.0](https://github.com/juanjecilla/OpoProbability/compare/v1.2.1...v1.3.0) (2026-10-12)
 
 ### Features
