@@ -1,3 +1,9 @@
+## [1.1.2](https://github.com/juanjecilla/OpoProbability/compare/v1.1.1...v1.1.2) (2026-08-01)
+
+### Bug Fixes
+
+- wrap prerendered shell with page/sheet card so it matches the mount ([6a1a664](https://github.com/juanjecilla/OpoProbability/commit/6a1a6644fa5b01540484e85d5264d6d7106740be))
+
 ## [1.1.1](https://github.com/juanjecilla/OpoProbability/compare/v1.1.0...v1.1.1) (2026-08-01)
 
 ### Performance Improvements
