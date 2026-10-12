@@ -12,7 +12,7 @@ import { useI18n } from './i18n/context';
 import { DEFAULT_FIELDS, parseFields, type FieldInputs } from './lib/fields';
 import { successProbability } from './lib/hypergeometric';
 import { toInteger } from './lib/fields';
-import { withMapP } from './lib/topicMap';
+import { seed, withMapP } from './lib/topicMap';
 import { fieldsFromSearch, searchFromFields, searchWithRun } from './lib/urlParams';
 import { useTheme } from './theme/useTheme';
 
@@ -82,6 +82,8 @@ export default function App() {
               onChange={setInputs}
               onReset={() => {
                 setInputs(DEFAULT_FIELDS);
+                // The example's P comes from the map, so the map returns to 1..P too.
+                if (source === 'map') setMap(seed(Number(DEFAULT_FIELDS.P)));
               }}
             />
             <TopicsPanel

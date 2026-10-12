@@ -35,6 +35,10 @@ const es = {
   presetOption: '{N} · {k} · mín {d}',
   presetHint: 'Los presets solo rellenan los campos: compruébalos con tu convocatoria.',
   reset: 'Volver al ejemplo',
+  resetConfirmTitle: '¿Volver al ejemplo?',
+  resetConfirmBody:
+    'Se restablecen las cifras y tus temas marcados pasan a ser los primeros del ejemplo. Perderás la selección actual.',
+  resetConfirmAction: 'Restablecer',
 
   fieldTopics: 'Temas totales',
   fieldTopicsHint: 'Todo el temario — las bolas del bombo.',
@@ -264,6 +268,10 @@ const en: Translation = {
   presetOption: '{N} · {k} · min {d}',
   presetHint: 'Presets only fill the fields in: check them against your official call.',
   reset: 'Reset to example',
+  resetConfirmTitle: 'Reset to the example?',
+  resetConfirmBody:
+    'The numbers are restored and your marked topics become the example’s first ones. You will lose your current selection.',
+  resetConfirmAction: 'Reset',
 
   fieldTopics: 'Total topics',
   fieldTopicsHint: 'Everything in the syllabus — the balls in the drum.',

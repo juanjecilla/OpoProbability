@@ -67,6 +67,38 @@ test('bulk tools and the range box edit the map', async ({ page }) => {
   await expect(page.locator('#field-P')).toHaveValue('6');
 });
 
+test('"Volver al ejemplo" restores the example, map included, after confirming', async ({
+  page,
+}) => {
+  await prepare(page);
+  await page.goto('/?N=60&k=4&P=40&d=2');
+  await useMyTopics(page);
+
+  await page.getByRole('button', { name: 'Ninguno' }).click();
+  await page.locator('#field-k').fill('5');
+  await expect(page.locator('#field-P')).toHaveValue('0');
+
+  // Cancel keeps everything.
+  await page.getByRole('button', { name: 'Volver al ejemplo' }).click();
+  await page.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(page.locator('#field-P')).toHaveValue('0');
+  await expect(page.locator('#field-k')).toHaveValue('5');
+
+  await page.getByRole('button', { name: 'Volver al ejemplo' }).click();
+  await page.getByRole('button', { name: 'Restablecer' }).click();
+  await expect(page.locator('#field-P')).toHaveValue('40');
+  await expect(page.locator('#field-k')).toHaveValue('4');
+});
+
+test('"Volver al ejemplo" needs no confirmation with random topics', async ({ page }) => {
+  await prepare(page);
+  await page.goto('/?N=60&k=5&P=10&d=2');
+
+  await page.getByRole('button', { name: 'Volver al ejemplo' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('#field-P')).toHaveValue('40');
+});
+
 test('arrow keys move between topic chips', async ({ page }) => {
   await prepare(page);
   await page.goto(`/?${EXAM}`);
