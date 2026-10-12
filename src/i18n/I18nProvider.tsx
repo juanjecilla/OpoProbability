@@ -10,7 +10,13 @@ function readStoredLocale(): Locale | null {
   return locales.find((locale) => locale === stored) ?? null;
 }
 
-export function I18nProvider({ children }: { children: ReactNode }) {
+interface I18nProviderProps {
+  children: ReactNode;
+  /** Which page's document title and description to keep in sync. */
+  page?: 'calculator' | 'simulator';
+}
+
+export function I18nProvider({ children, page = 'calculator' }: I18nProviderProps) {
   const [locale, setLocaleState] = useState<Locale>(() => readStoredLocale() ?? detectLocale());
 
   const setLocale = useCallback((next: Locale) => {
@@ -22,11 +28,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // prompts) in sync with the language actually rendered.
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = translations[locale].htmlTitle;
+    const messages = translations[locale];
+    document.title = page === 'simulator' ? messages.simHtmlTitle : messages.htmlTitle;
     document
       .querySelector('meta[name="description"]')
-      ?.setAttribute('content', translations[locale].metaDescription);
-  }, [locale]);
+      ?.setAttribute(
+        'content',
+        page === 'simulator' ? messages.simMetaDescription : messages.metaDescription,
+      );
+  }, [locale, page]);
 
   const value = useMemo(() => createI18nValue(locale, setLocale), [locale, setLocale]);
 

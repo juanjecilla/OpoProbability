@@ -5,6 +5,10 @@ import type { Theme } from '../theme/useTheme';
 interface SiteHeaderProps {
   theme: Theme;
   onToggleTheme: () => void;
+  /** Link to the other page of the app. */
+  nav?: { href: string; label: string };
+  /** Replaces the calculator's title, tagline and subtitle on other pages. */
+  copy?: { title: string; tagline: string; subtitle: string };
 }
 
 /** Curve rising off a baseline: the shape the whole app is about. */
@@ -54,7 +58,7 @@ function MoonIcon() {
   );
 }
 
-export function SiteHeader({ theme, onToggleTheme }: SiteHeaderProps) {
+export function SiteHeader({ theme, onToggleTheme, nav, copy }: SiteHeaderProps) {
   const { t, locale, setLocale } = useI18n();
 
   const nextMode = theme === 'dark' ? t('themeLight') : t('themeDark');
@@ -72,17 +76,22 @@ export function SiteHeader({ theme, onToggleTheme }: SiteHeaderProps) {
             {/* The name never translates, so it is spelt out for screen
                 readers once and drawn for everyone else. */}
             <h1 className="masthead__wordmark">
-              <span className="visually-hidden">{t('appTitle')}</span>
+              <span className="visually-hidden">{copy?.title ?? t('appTitle')}</span>
               <span aria-hidden="true">
                 <strong>{productName.prefix}</strong>
                 <span className="masthead__wordmark-tail">{productName.suffix}</span>
               </span>
             </h1>
-            <p className="masthead__tagline">{t('tagline')}</p>
+            <p className="masthead__tagline">{copy?.tagline ?? t('tagline')}</p>
           </div>
         </div>
 
         <div className="masthead__actions">
+          {nav ? (
+            <a className="masthead__nav" href={nav.href}>
+              {nav.label}
+            </a>
+          ) : null}
           <div className="segmented" role="group" aria-label={t('languageLabel')}>
             {locales.map((candidate) => (
               <button
@@ -111,7 +120,7 @@ export function SiteHeader({ theme, onToggleTheme }: SiteHeaderProps) {
         </div>
       </div>
 
-      <p className="masthead__subtitle">{t('subtitle')}</p>
+      <p className="masthead__subtitle">{copy?.subtitle ?? t('subtitle')}</p>
     </header>
   );
 }

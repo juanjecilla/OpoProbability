@@ -8,6 +8,12 @@ export default defineConfig({
   plugins: [react(), prerenderShell()],
   // The app is served from https://opoprobabilidad.com
   base: '/',
+  build: {
+    rollupOptions: {
+      // Two pages: the calculator and the draw simulator.
+      input: { main: 'index.html', simulacro: 'simulacro/index.html' },
+    },
+  },
   test: {
     // Playwright owns e2e/: its own test() would otherwise collide with Vitest's.
     exclude: ['e2e/**', 'node_modules/**'],

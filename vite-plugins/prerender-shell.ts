@@ -19,8 +19,17 @@ function escapeHtml(value: string): string {
  * this is a swapped placeholder, not a real hydration target, and can't
  * drift into a hydration-mismatch warning.
  */
-function renderMastheadShell(): string {
+type Page = 'calculator' | 'simulator';
+
+function renderMastheadShell(page: Page): string {
   const t = translations.es;
+  const isSimulator = page === 'simulator';
+  const title = isSimulator ? t.simAppTitle : t.appTitle;
+  const tagline = isSimulator ? t.simTagline : t.tagline;
+  const subtitle = isSimulator ? t.simSubtitle : t.subtitle;
+  const nav = isSimulator
+    ? { href: '/', label: t.calcNavLink }
+    : { href: '/simulacro/', label: t.simNavLink };
   const themeLabel = escapeHtml(t.themeToggle.replace('{mode}', t.themeDark));
   const languageButtons = ['es', 'en']
     .map(
@@ -42,13 +51,14 @@ function renderMastheadShell(): string {
       </span>
       <div class="masthead__titles">
         <h1 class="masthead__wordmark">
-          <span class="visually-hidden">${escapeHtml(t.appTitle)}</span>
+          <span class="visually-hidden">${escapeHtml(title)}</span>
           <span aria-hidden="true"><strong>${escapeHtml(productName.prefix)}</strong><span class="masthead__wordmark-tail">${escapeHtml(productName.suffix)}</span></span>
         </h1>
-        <p class="masthead__tagline">${escapeHtml(t.tagline)}</p>
+        <p class="masthead__tagline">${escapeHtml(tagline)}</p>
       </div>
     </div>
     <div class="masthead__actions">
+      <a class="masthead__nav" href="${nav.href}">${escapeHtml(nav.label)}</a>
       <div class="segmented" role="group" aria-label="${escapeHtml(t.languageLabel)}">${languageButtons}</div>
       <button type="button" class="icon-button" aria-label="${themeLabel}" title="${themeLabel}">
         <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
@@ -57,7 +67,7 @@ function renderMastheadShell(): string {
       </button>
     </div>
   </div>
-  <p class="masthead__subtitle">${escapeHtml(t.subtitle)}</p>
+  <p class="masthead__subtitle">${escapeHtml(subtitle)}</p>
 </header></article></div>`;
 }
 
@@ -75,36 +85,42 @@ export function prerenderShell(): Plugin {
     enforce: 'post',
     generateBundle(_options, bundle) {
       const assets = Object.values(bundle);
-      const htmlFile = assets.find(
-        (item) => item.type === 'asset' && item.fileName === 'index.html',
-      );
-      const cssFile = assets.find(
-        (item) => item.type === 'asset' && item.fileName.endsWith('.css'),
-      );
+      const pages: Record<string, Page> = {
+        'index.html': 'calculator',
+        'simulacro/index.html': 'simulator',
+      };
 
-      if (!htmlFile || htmlFile.type !== 'asset' || typeof htmlFile.source !== 'string') {
-        throw new Error('prerender-shell: could not find index.html in the build output');
-      }
-
-      let html = htmlFile.source;
-
-      if (cssFile && cssFile.type === 'asset' && typeof cssFile.source === 'string') {
-        const escapedFileName = cssFile.fileName.replaceAll(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-        const linkPattern = new RegExp(`<link[^>]*href="[^"]*${escapedFileName}"[^>]*>`, 'u');
-        if (!linkPattern.test(html)) {
-          throw new Error('prerender-shell: could not find the stylesheet <link> to inline');
+      for (const [fileName, page] of Object.entries(pages)) {
+        const htmlFile = assets.find((item) => item.type === 'asset' && item.fileName === fileName);
+        if (!htmlFile || htmlFile.type !== 'asset' || typeof htmlFile.source !== 'string') {
+          throw new Error(`prerender-shell: could not find ${fileName} in the build output`);
         }
-        html = html.replace(linkPattern, `<style>${cssFile.source}</style>`);
-        delete bundle[cssFile.fileName];
+
+        let html = htmlFile.source;
+
+        // Both pages share one stylesheet, so it is inlined into each and
+        // dropped from the bundle only once every page has taken its copy.
+        const linked = /<link[^>]*rel="stylesheet"[^>]*href="\/?([^"]+\.css)"[^>]*>/u.exec(html);
+        if (linked?.[1]) {
+          const cssFile = bundle[linked[1]];
+          if (cssFile?.type !== 'asset' || typeof cssFile.source !== 'string') {
+            throw new Error(`prerender-shell: could not find ${linked[1]} to inline`);
+          }
+          html = html.replace(linked[0], () => `<style>${String(cssFile.source)}</style>`);
+        }
+
+        const rootPattern = /<div id="root"><\/div>/u;
+        if (!rootPattern.test(html)) {
+          throw new Error(`prerender-shell: could not find the empty #root div in ${fileName}`);
+        }
+        html = html.replace(rootPattern, () => `<div id="root">${renderMastheadShell(page)}</div>`);
+
+        htmlFile.source = html;
       }
 
-      const rootPattern = /<div id="root"><\/div>/u;
-      if (!rootPattern.test(html)) {
-        throw new Error('prerender-shell: could not find the empty #root div to fill');
+      for (const name of Object.keys(bundle)) {
+        if (name.endsWith('.css')) delete bundle[name];
       }
-      html = html.replace(rootPattern, `<div id="root">${renderMastheadShell()}</div>`);
-
-      htmlFile.source = html;
     },
   };
 }
