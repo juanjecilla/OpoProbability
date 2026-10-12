@@ -5,7 +5,9 @@ import {
   MAX_ROUNDS,
   MAX_SESSIONS,
   deleteSession,
+  canResume,
   deserialize,
+  matchesCurrent,
   playRounds,
   sameConfig,
   serialize,
@@ -105,5 +107,61 @@ describe('serialize / deserialize', () => {
   it('rejects rounds with an unknown outcome', () => {
     const bad = { ...played(1), rounds: [{ id: 1, drawn: [1], outcome: 'draw' }] };
     expect(deserialize(JSON.stringify({ version: 1, sessions: [bad] }))).toEqual([]);
+  });
+});
+
+describe('Studied source', () => {
+  it('tags a random Session and picks P topics', () => {
+    const session = startSession(params, rng, 1);
+    expect(session.source).toBe('random');
+    expect(session.studied).toHaveLength(10);
+  });
+
+  it('uses the given Topic map as-is and tags it', () => {
+    const session = startSession(params, rng, 1, [2, 4, 6]);
+    expect(session.source).toBe('map');
+    expect(session.studied).toEqual([2, 4, 6]);
+  });
+
+  it('reads Sessions saved before sources existed as random', () => {
+    const { source: _source, ...legacy } = startSession(params, rng, 1);
+    const raw = JSON.stringify({
+      version: 1,
+      sessions: [{ ...legacy, rounds: [{ id: 1, drawn: [1, 2, 3], outcome: 'success' }] }],
+    });
+    expect(deserialize(raw)[0]?.source).toBe('random');
+  });
+});
+
+describe('matchesCurrent', () => {
+  const map = [1, 2, 3, 99];
+  const mapParams = { ...params, prepared: 3 };
+  const mapSession = startSession(mapParams, rng, 1, [1, 2, 3]);
+
+  it('matches a Topic-map Session while the map (clipped to N) is unchanged', () => {
+    expect(matchesCurrent(mapSession, mapParams, 'map', map)).toBe(true);
+  });
+
+  it('rejects an edited map', () => {
+    expect(matchesCurrent(mapSession, mapParams, 'map', [1, 2, 4])).toBe(false);
+  });
+
+  it('rejects a source switch even with identical numbers', () => {
+    const random = startSession(params, rng, 1);
+    expect(matchesCurrent(random, params, 'map', map)).toBe(false);
+    expect(matchesCurrent(mapSession, mapParams, 'random', map)).toBe(false);
+    expect(matchesCurrent(random, params, 'random', map)).toBe(true);
+  });
+});
+
+describe('canResume', () => {
+  it('always allows a random Session', () => {
+    expect(canResume(startSession(params, rng, 1), [])).toBe(true);
+  });
+
+  it('allows a Topic-map Session only while the map still agrees', () => {
+    const session = startSession(params, rng, 1, [1, 2]);
+    expect(canResume(session, [1, 2, 99])).toBe(true);
+    expect(canResume(session, [1, 3])).toBe(false);
   });
 });

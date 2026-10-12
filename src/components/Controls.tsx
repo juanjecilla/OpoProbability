@@ -42,9 +42,11 @@ interface ControlsProps {
   errors: Partial<Record<FieldName, FieldIssue>>;
   onChange: (inputs: FieldInputs) => void;
   onReset: () => void;
+  /** `P` is counted from the Topic map, so it is shown but not edited here. */
+  lockedP?: boolean;
 }
 
-export function Controls({ inputs, errors, onChange, onReset }: ControlsProps) {
+export function Controls({ inputs, errors, onChange, onReset, lockedP = false }: ControlsProps) {
   const { t, messages } = useI18n();
 
   /** Presets describe the exam, so they fill N, k and the minimum needed. */
@@ -92,8 +94,9 @@ export function Controls({ inputs, errors, onChange, onReset }: ControlsProps) {
           const label = t(field.label);
           const current = toInteger(inputs[field.name]);
           const max = maximum(inputs, field.name);
-          const atMin = current !== null && current <= MINIMUM[field.name];
-          const atMax = current !== null && max !== null && current >= max;
+          const locked = lockedP && field.name === 'P';
+          const atMin = locked || (current !== null && current <= MINIMUM[field.name]);
+          const atMax = locked || (current !== null && max !== null && current >= max);
 
           return (
             <div className="field" key={field.name}>
@@ -125,6 +128,7 @@ export function Controls({ inputs, errors, onChange, onReset }: ControlsProps) {
                   inputMode="numeric"
                   autoComplete="off"
                   value={inputs[field.name]}
+                  readOnly={locked}
                   aria-invalid={issue !== undefined}
                   aria-describedby={hintId}
                   onChange={(event) => {
@@ -145,7 +149,7 @@ export function Controls({ inputs, errors, onChange, onReset }: ControlsProps) {
               </div>
 
               <p className="field__hint" id={hintId}>
-                {t(field.hint)}
+                {t(locked ? 'fieldPreparedFromMap' : field.hint)}
               </p>
 
               {issue ? (

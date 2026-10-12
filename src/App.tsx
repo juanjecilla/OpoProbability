@@ -6,9 +6,14 @@ import { Section } from './components/Section';
 import { SimulatorCta } from './components/SimulatorCta';
 import { SiteHeader } from './components/SiteHeader';
 import { SupportFooter } from './components/SupportFooter';
+import { TopicsPanel } from './components/TopicsPanel';
+import { useTopicMap } from './hooks/useTopicMap';
 import { useI18n } from './i18n/context';
 import { DEFAULT_FIELDS, parseFields, type FieldInputs } from './lib/fields';
-import { fieldsFromSearch, searchFromFields } from './lib/urlParams';
+import { successProbability } from './lib/hypergeometric';
+import { toInteger } from './lib/fields';
+import { withMapP } from './lib/topicMap';
+import { fieldsFromSearch, searchFromFields, searchWithRun } from './lib/urlParams';
 import { useTheme } from './theme/useTheme';
 
 // Below-the-fold: not needed for first paint, so split out of the main
@@ -31,10 +36,17 @@ export default function App() {
   const { t } = useI18n();
   const { theme, toggleTheme } = useTheme();
 
-  const [inputs, setInputs] = useState<FieldInputs>(
+  const [typed, setInputs] = useState<FieldInputs>(
     () => fieldsFromSearch(window.location.search) ?? DEFAULT_FIELDS,
   );
   const [target, setTarget] = useState(0.95);
+  const { source, map, seeded, chooseSource, setMap } = useTopicMap();
+
+  // With the Topic map as the source, P is counted from it rather than typed.
+  const inputs = useMemo(
+    () => (source === 'map' ? withMapP(typed, map) : typed),
+    [typed, source, map],
+  );
 
   // Memoised because `params` is the identity every panel keys its own
   // memoisation off: re-parsing on each render would redraw the whole curve.
@@ -47,6 +59,8 @@ export default function App() {
   }, [inputs]);
 
   const simulatorSearch = params ? searchFromFields(inputs) : null;
+  const simulatorRunSearch = params ? searchWithRun(inputs, 100) : null;
+  const probability = useMemo(() => (params ? successProbability(params) : null), [params]);
 
   return (
     <div className="page">
@@ -64,17 +78,31 @@ export default function App() {
             <Controls
               inputs={inputs}
               errors={errors}
+              lockedP={source === 'map'}
               onChange={setInputs}
               onReset={() => {
                 setInputs(DEFAULT_FIELDS);
               }}
             />
-            <SimulatorCta search={simulatorSearch} />
+            <TopicsPanel
+              N={toInteger(inputs.N)}
+              randomCount={toInteger(inputs.P)}
+              source={source}
+              map={map}
+              seeded={seeded}
+              onSource={(next) => {
+                chooseSource(next, toInteger(inputs.P) ?? 0);
+                // Back to Random, keep the count the map had given.
+                if (next === 'random') setInputs(inputs);
+              }}
+              onMap={setMap}
+            />
+            <SimulatorCta variant="quiet" href={simulatorSearch} source={source} />
           </Section>
 
           <Section index="02" id="section-result" title={t('resultSection')}>
             <ResultPanel params={params} />
-            <SimulatorCta search={simulatorSearch} />
+            <SimulatorCta variant="primary" href={simulatorRunSearch} probability={probability} />
           </Section>
 
           <Section index="03" id="section-progress" title={t('progressSection')}>

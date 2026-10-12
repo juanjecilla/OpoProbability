@@ -3,18 +3,20 @@ import { useState } from 'react';
 import { useI18n } from '../../i18n/context';
 import { tally } from '../../lib/draw';
 import { formatPercent } from '../../lib/format';
-import { MAX_SESSIONS, type Session } from '../../lib/sessions';
+import { canResume, MAX_SESSIONS, type Session } from '../../lib/sessions';
 import { RoundsList } from './RoundsList';
 
 interface Props {
   sessions: Session[];
+  /** The current Topic map: a Session drawn from an older one cannot be resumed. */
+  map: readonly number[];
   currentId: string | null;
   onResume: (session: Session) => void;
   onDelete: (session: Session) => void;
   onClear: () => void;
 }
 
-export function SessionsArchive({ sessions, currentId, onResume, onDelete, onClear }: Props) {
+export function SessionsArchive({ sessions, map, currentId, onResume, onDelete, onClear }: Props) {
   const { t, intlLocale, locale } = useI18n();
   const [expanded, setExpanded] = useState<string | null>(null);
   const dateFormat = new Intl.DateTimeFormat(intlLocale, {
@@ -33,6 +35,8 @@ export function SessionsArchive({ sessions, currentId, onResume, onDelete, onCle
           const { N, k, discards, prepared } = session.params;
           const isOpen = expanded === session.id;
           const detailId = `session-${session.id}`;
+          const resumable = canResume(session, map);
+          const blockedId = `session-${session.id}-blocked`;
 
           return (
             <li key={session.id} className="session">
@@ -43,7 +47,8 @@ export function SessionsArchive({ sessions, currentId, onResume, onDelete, onCle
                     <span className="session__current"> · {t('simSessionCurrent')}</span>
                   ) : null}
                   <div className="session__meta">
-                    {t('simSessionConfig', { N, k, d: k - discards, P: prepared })}
+                    {t('simSessionConfig', { N, k, d: k - discards, P: prepared })} ·{' '}
+                    {t(session.source === 'map' ? 'simSessionSourceMap' : 'simSessionSourceRandom')}
                   </div>
                   <div className="session__meta">
                     {t('simSessionSummary', {
@@ -67,12 +72,19 @@ export function SessionsArchive({ sessions, currentId, onResume, onDelete, onCle
                   <button
                     type="button"
                     className="button button--quiet"
+                    disabled={!resumable}
+                    aria-describedby={resumable ? undefined : blockedId}
                     onClick={() => {
                       onResume(session);
                     }}
                   >
                     {t('simSessionResume')}
                   </button>
+                  {resumable ? null : (
+                    <span className="session__blocked" id={blockedId}>
+                      {t('simSessionResumeBlocked')}
+                    </span>
+                  )}
                   <button
                     type="button"
                     className="button button--quiet"
