@@ -26,3 +26,18 @@ export function searchFromFields(inputs: FieldInputs): string {
   for (const name of NAMES) query.set(name, inputs[name]);
   return `?${query.toString()}`;
 }
+
+/** Batch sizes a link may ask the simulator to play on arrival. */
+const RUN_SIZES = [10, 100] as const;
+export type RunSize = (typeof RUN_SIZES)[number];
+
+/** Reads `&run=`: anything but a known batch size means "don't run". */
+export function runFromSearch(search: string): RunSize | null {
+  const value = Number(new URLSearchParams(search).get('run'));
+  return RUN_SIZES.find((size) => size === value) ?? null;
+}
+
+/** `searchFromFields` plus a `run` request, for links into the simulator. */
+export function searchWithRun(inputs: FieldInputs, run: RunSize): string {
+  return `${searchFromFields(inputs)}&run=${String(run)}`;
+}

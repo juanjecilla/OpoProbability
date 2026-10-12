@@ -14,6 +14,13 @@ The board's random pick of `k` distinct topics from the Syllabus, without replac
 A Syllabus topic the candidate can (or cannot) develop. There are `P` studied topics.
 _Avoid_: prepared (engine-internal name only)
 
+**Topic map**:
+The candidate's saved marking of each Syllabus topic as Studied or Unstudied. Outlives Sessions and changes of Syllabus size.
+_Avoid_: checklist, prepared list, temario (that is the Syllabus)
+
+**Studied source**:
+Where a Session's Studied topics come from: _Random_ (P topics picked at random per Session) or _Topic map_ (the marked topics; P is their count).
+
 **Minimum**:
 How many of the drawn topics the candidate must be able to develop (`d`). The rest may be discarded.
 
@@ -39,5 +46,6 @@ _Avoid_: contest, concurso
 ## Relationships
 
 - A **Session** has one configuration, one set of **Studied topics** and many **Rounds**.
+- A **Session** snapshots its **Studied topics** from its **Studied source** at start; editing the **Topic map** or switching **Studied source** starts a new Session.
 - A **Round** is a **Draw**; it is a **Success**, or a **Failure** which may also be a **Wipeout**.
 - The share of **Success** Rounds in a long Session converges to the calculator's probability.

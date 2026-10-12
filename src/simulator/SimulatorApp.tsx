@@ -4,14 +4,30 @@ import { Controls } from '../components/Controls';
 import { Section } from '../components/Section';
 import { SiteHeader } from '../components/SiteHeader';
 import { SupportFooter } from '../components/SupportFooter';
+import { TopicsPanel } from '../components/TopicsPanel';
 import { prefersReducedMotion, useAnimationSettings } from '../hooks/useAnimationSettings';
 import { useSessions } from '../hooks/useSessions';
+import { useTopicMap } from '../hooks/useTopicMap';
 import { useI18n } from '../i18n/context';
 import { cryptoRng, tally, type Outcome } from '../lib/draw';
-import { DEFAULT_FIELDS, parseFields, toRequired, type FieldInputs } from '../lib/fields';
+import {
+  DEFAULT_FIELDS,
+  parseFields,
+  toInteger,
+  toRequired,
+  type FieldInputs,
+} from '../lib/fields';
 import { successProbability } from '../lib/hypergeometric';
-import { playRounds, sameConfig, startSession, type Round, type Session } from '../lib/sessions';
-import { fieldsFromSearch, searchFromFields } from '../lib/urlParams';
+import {
+  canResume,
+  matchesCurrent,
+  playRounds,
+  startSession,
+  type Round,
+  type Session,
+} from '../lib/sessions';
+import { studiedWithin, withMapP } from '../lib/topicMap';
+import { fieldsFromSearch, runFromSearch, searchFromFields } from '../lib/urlParams';
 import { useTheme } from '../theme/useTheme';
 import { AnimationSettings } from './components/AnimationSettings';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -55,10 +71,21 @@ export default function SimulatorApp() {
   const { settings, setSettings } = useAnimationSettings();
   const { sessions, save, remove, clear } = useSessions();
 
-  const [inputs, setInputs] = useState<FieldInputs>(
+  const [typed, setInputs] = useState<FieldInputs>(
     () => fieldsFromSearch(window.location.search) ?? DEFAULT_FIELDS,
   );
+  const { source, map, seeded, chooseSource, setMap } = useTopicMap();
+  // With the Topic map as the source, P is counted from it rather than typed.
+  const inputs = useMemo(
+    () => (source === 'map' ? withMapP(typed, map) : typed),
+    [typed, source, map],
+  );
   const { params, errors } = useMemo(() => parseFields(inputs), [inputs]);
+
+  // A link from the calculator can ask for a batch on arrival. Read once here;
+  // the address effect below drops `run`, so a reload does not repeat it.
+  const [pendingRun] = useState(() => runFromSearch(window.location.search));
+  const ranPending = useRef(false);
 
   const [session, setSession] = useState<Session | null>(null);
   const [stage, setStage] = useState<Stage>(IDLE_STAGE);
@@ -81,7 +108,7 @@ export default function SimulatorApp() {
 
   // Rounds only belong to the numbers they were drawn with: edit the numbers
   // and the Session on screen is simply no longer the current one.
-  const active = session && params && sameConfig(session.params, params) ? session : null;
+  const active = session && params && matchesCurrent(session, params, source, map) ? session : null;
   const counts = tally(active?.rounds.map((round) => round.outcome) ?? []);
   const expected = params ? successProbability(params) : null;
 
@@ -119,7 +146,14 @@ export default function SimulatorApp() {
 
   const draw = (count: number) => {
     if (!params || busy) return;
-    const base = active ?? startSession(params, cryptoRng, Date.now());
+    const base =
+      active ??
+      startSession(
+        params,
+        cryptoRng,
+        Date.now(),
+        source === 'map' ? studiedWithin(map, params.N) : undefined,
+      );
     const next = playRounds(base, count, cryptoRng);
     const round = next.rounds.at(-1);
     if (!round) return;
@@ -186,11 +220,22 @@ export default function SimulatorApp() {
     );
   };
 
+  // The calculator's "simulate 100 draws" lands here with `run=100`.
+  useEffect(() => {
+    if (pendingRun === null || ranPending.current || !params) return;
+    ranPending.current = true;
+    draw(pendingRun);
+    // Once, on arrival: later edits must not replay the request.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const resume = (target: Session) => {
+    if (!canResume(target, map)) return;
     clearTimers();
     setBusy(false);
     setStage(IDLE_STAGE);
     setSession(target);
+    chooseSource(target.source, target.params.prepared);
     const { N, k, discards, prepared } = target.params;
     setInputs({ N: String(N), k: String(k), P: String(prepared), d: String(k - discards) });
     window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
@@ -241,11 +286,28 @@ export default function SimulatorApp() {
             <p className="sim-summary" data-invalid={params === null}>
               {summary}
             </p>
+            <TopicsPanel
+              N={toInteger(inputs.N)}
+              randomCount={toInteger(inputs.P)}
+              source={source}
+              map={map}
+              seeded={seeded}
+              highlight={stage.phase === 'done' ? stage.drawn : undefined}
+              onSource={(next) => {
+                changeInputs(next === 'random' ? inputs : typed);
+                chooseSource(next, toInteger(inputs.P) ?? 0);
+              }}
+              onMap={(next) => {
+                changeInputs(typed);
+                setMap(next);
+              }}
+            />
             <details className="sim-edit">
               <summary>{t('simConfigEdit')}</summary>
               <Controls
                 inputs={inputs}
                 errors={errors}
+                lockedP={source === 'map'}
                 onChange={changeInputs}
                 onReset={() => {
                   changeInputs(DEFAULT_FIELDS);
@@ -324,6 +386,7 @@ export default function SimulatorApp() {
           <Section index="04" id="sim-sessions" title={t('simSessionsSection')}>
             <SessionsArchive
               sessions={sessions}
+              map={map}
               currentId={active?.id ?? null}
               onResume={resume}
               onDelete={(target) => {

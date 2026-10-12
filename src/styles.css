@@ -62,9 +62,9 @@
   --ok: #82c093;
   --warn: #dcb066;
   --danger: #f0a0a0;
-  --ok-weak: color-mix(in oklab, var(--ok) 18%, var(--sheet));
-  --warn-weak: color-mix(in oklab, var(--warn) 18%, var(--sheet));
-  --danger-weak: color-mix(in oklab, var(--danger) 18%, var(--sheet));
+  --ok-weak: color-mix(in oklab, var(--ok) 12%, var(--sheet));
+  --warn-weak: color-mix(in oklab, var(--warn) 12%, var(--sheet));
+  --danger-weak: color-mix(in oklab, var(--danger) 12%, var(--sheet));
 
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 28px 60px -34px rgba(0, 0, 0, 0.8);
 
@@ -1194,6 +1194,57 @@ a.button,
   color: var(--sheet);
 }
 
+/*
+ * Interaction states. Each variant sets its own text colour on hover and press:
+ * the global `a:hover` rule is more specific than `.button--primary`, so without
+ * this a link-styled button turned its label the colour of its own background.
+ * Disabled and inert buttons are excluded so they never look pressable.
+ */
+.button {
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    transform 0.08s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button:hover:where(:not(:disabled, [aria-disabled='true'])) {
+  border-color: var(--rule-ink);
+  background: color-mix(in oklab, var(--sheet-2), var(--ink) 9%);
+  color: var(--ink);
+}
+
+.button:active:where(:not(:disabled, [aria-disabled='true'])) {
+  border-color: var(--rule-ink);
+  background: color-mix(in oklab, var(--sheet-2), var(--ink) 16%);
+  color: var(--ink);
+  transform: translateY(1px);
+}
+
+.button--primary:hover:where(:not(:disabled, [aria-disabled='true'])) {
+  border-color: color-mix(in oklab, var(--primary), var(--ink) 16%);
+  background: color-mix(in oklab, var(--primary), var(--ink) 16%);
+  color: var(--on-primary);
+}
+
+.button--primary:active:where(:not(:disabled, [aria-disabled='true'])) {
+  border-color: color-mix(in oklab, var(--primary), var(--ink) 28%);
+  background: color-mix(in oklab, var(--primary), var(--ink) 28%);
+  color: var(--on-primary);
+}
+
+.button--danger:hover:where(:not(:disabled, [aria-disabled='true'])) {
+  border-color: color-mix(in oklab, var(--danger), var(--ink) 16%);
+  background: color-mix(in oklab, var(--danger), var(--ink) 16%);
+  color: var(--sheet);
+}
+
+.button--danger:active:where(:not(:disabled, [aria-disabled='true'])) {
+  border-color: color-mix(in oklab, var(--danger), var(--ink) 28%);
+  background: color-mix(in oklab, var(--danger), var(--ink) 28%);
+  color: var(--sheet);
+}
+
 .button:disabled,
 .button[aria-disabled='true'] {
   opacity: 0.5;
@@ -1226,7 +1277,8 @@ a.button,
   gap: 14px;
   margin-top: 24px;
   padding: 16px 18px;
-  border: 1px dashed var(--rule);
+  border: 1px solid var(--primary);
+  border-left-width: 5px;
   border-radius: var(--r);
   background: var(--primary-weak);
 }
@@ -1252,7 +1304,12 @@ a.button,
   color: var(--danger);
 }
 
+.sim-edit {
+  margin-top: 16px;
+}
+
 .sim-edit > summary {
+  padding-block: 8px;
   cursor: pointer;
   font: 600 13px / 1.4 var(--sans);
   color: var(--primary);
@@ -1689,4 +1746,236 @@ a.button,
   to {
     box-shadow: 0 0 0 24px transparent;
   }
+}
+
+/* ------------------------------------------------- simulator entry (quiet) */
+
+.sim-link {
+  margin: 18px 0 0;
+  font: 400 13px / 1.5 var(--sans);
+  color: var(--muted);
+}
+
+.sim-link__anchor {
+  display: inline-block;
+  padding-block: 6px;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.sim-link__anchor:hover {
+  color: var(--ink);
+  text-decoration-thickness: 2px;
+}
+
+.sim-link__off {
+  font-weight: 600;
+}
+
+.session__blocked {
+  flex-basis: 100%;
+  font: 400 12.5px / 1.4 var(--sans);
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------ topic map */
+
+.topics {
+  margin-top: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--sheet-2);
+  interpolate-size: allow-keywords;
+}
+
+.topics__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 14px;
+  min-height: 44px;
+  padding: 10px 16px;
+  cursor: pointer;
+  list-style: none;
+  font: 600 14px / 1.4 var(--sans);
+}
+
+.topics__summary::-webkit-details-marker {
+  display: none;
+}
+
+.topics__title::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.2s;
+}
+
+.topics[open] .topics__title::before {
+  transform: rotate(90deg);
+}
+
+.topics__state {
+  font-weight: 500;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth open/close where supported; elsewhere the panel simply toggles. */
+.topics::details-content {
+  block-size: 0;
+  overflow: clip;
+  transition:
+    block-size 0.28s ease,
+    content-visibility 0.28s allow-discrete;
+}
+
+.topics[open]::details-content {
+  block-size: auto;
+}
+
+.topics__body {
+  display: grid;
+  gap: 14px;
+  padding: 4px 16px 18px;
+}
+
+.topics__note {
+  margin: 0;
+  font: 400 13px / 1.5 var(--sans);
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.topics__counter {
+  margin: 0;
+  font: 500 14px / 1.4 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.topics__bulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.topics__bulk .button,
+.topics__range .button {
+  margin-top: 0;
+}
+
+.topics__range-label {
+  display: block;
+  margin-bottom: 6px;
+  font: 600 13px / 1.4 var(--sans);
+}
+
+.topics__range-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.topics__range-input {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+/* segmented Random / My topics switch */
+
+.seg {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(100%, 300px);
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--sheet);
+}
+
+.seg__thumb {
+  position: absolute;
+  inset: 3px auto 3px 3px;
+  width: calc(50% - 3px);
+  border-radius: var(--r-sm);
+  background: var(--primary);
+  transition: transform 0.25s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+.seg[data-value='map'] .seg__thumb {
+  transform: translateX(100%);
+}
+
+.seg__option {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  cursor: pointer;
+}
+
+.seg__label {
+  padding: 10px 8px;
+  border-radius: var(--r-sm);
+  font: 600 13px / 1 var(--sans);
+  color: var(--ink);
+  transition: color 0.2s;
+}
+
+.seg__input:checked + .seg__label {
+  color: var(--on-primary);
+}
+
+.seg__input:focus-visible + .seg__label {
+  outline: 2.5px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* topic chips: solid = studied, dashed = unstudied, so colour is not the only cue */
+
+.topics__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 6px;
+}
+
+.topic-chip {
+  min-width: 42px;
+  min-height: 38px;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  cursor: pointer;
+  font: 700 13px / 1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.topic-chip--studied {
+  border-style: solid;
+  border-color: var(--ok);
+  background: var(--ok-weak);
+}
+
+.topic-chip--unstudied {
+  border-style: dashed;
+  border-color: var(--danger);
+  background: var(--danger-weak);
+}
+
+.topic-chip--studied:hover {
+  background: color-mix(in oklab, var(--ok-weak), var(--ink) 10%);
+}
+
+.topic-chip--unstudied:hover {
+  background: color-mix(in oklab, var(--danger-weak), var(--ink) 10%);
 }
